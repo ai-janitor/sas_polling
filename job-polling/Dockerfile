@@ -10,6 +10,7 @@ FROM amazonlinux:2023
 
 # Install minimal runtime dependencies (using built-in Python 3.9)
 RUN dnf update -y && dnf install -y --allowerasing \
+    python3-pip \
     curl \
     shadow-utils \
     && dnf clean all
@@ -21,7 +22,11 @@ RUN groupadd -g 1001 appgroup && \
 # Set working directory
 WORKDIR /app
 
-# Copy application code (no external dependencies - using vanilla Python 3.9)
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
 COPY . .
 
 # Reports module will be mounted via volume in docker-compose
