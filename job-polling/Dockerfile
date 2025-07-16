@@ -3,76 +3,16 @@
 # =============================================================================
 # Purpose: Containerize the job polling service with queue management
 # Technology: Python 3.11 with Flask/FastAPI and background workers
-# Base Image: Amazon Linux 2023 with Python 3.11
-#
-# STRICT REQUIREMENTS:
-# - Amazon Linux 2023 base image MANDATORY
-# - Multi-stage build for production optimization
-# - Non-root user for security
-# - Health checks for container monitoring
-# - Proper signal handling for graceful shutdown
-# - Configuration from environment variables
-# - Support for concurrent job processing
-#
-# BUILD STAGES:
-# 1. Dependencies installation stage
-# 2. Production runtime stage
-#
-# SECURITY FEATURES:
-# - Non-root user execution
-# - Minimal attack surface
-# - No unnecessary packages or tools
-# - Read-only root filesystem support
-# - Secure file handling for report generation
-#
-# CONFIGURATION:
-# All configuration loaded from config.dev.env via environment variables
+# Base Image: Amazon Linux 2023 (Python 3.11 pre-installed)
 # =============================================================================
 
-# Dependencies stage
-FROM amazonlinux:2023 AS dependencies
+FROM amazonlinux:2023
 
-# Install Python 3.11 and development tools for report generation
+# Install minimal runtime dependencies (using built-in Python 3.9)
 RUN dnf update -y && dnf install -y --allowerasing \
-    python3.11 \
-    python3.11-pip \
-    python3.11-devel \
-    gcc \
-    openssl-devel \
-    libffi-devel \
-    curl \
-    && dnf clean all
-
-# Set Python 3.11 as default python3
-RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.11 1
-
-# Set working directory
-WORKDIR /app
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt
-
-# =============================================================================
-
-# Production runtime stage
-FROM amazonlinux:2023 AS production
-
-# Install runtime dependencies
-RUN dnf update -y && dnf install -y --allowerasing \
-    python3.11 \
-    python3.11-pip \
     curl \
     shadow-utils \
     && dnf clean all
-
-# Set Python 3.11 as default python3
-RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.11 1
 
 # Create non-root user
 RUN groupadd -g 1001 appgroup && \
@@ -81,12 +21,7 @@ RUN groupadd -g 1001 appgroup && \
 # Set working directory
 WORKDIR /app
 
-# Install Python dependencies directly in production stage
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt
-
-# Copy application code
+# Copy application code (no external dependencies - using vanilla Python 3.9)
 COPY . .
 
 # Reports module will be mounted via volume in docker-compose
@@ -117,21 +52,8 @@ EXPOSE ${POLLING_PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5001/health || exit 1
 
-# Production command with background workers
-CMD ["python3", "-m", "gunicorn", \
-     "--bind", "0.0.0.0:5001", \
-     "--workers", "2", \
-     "--worker-class", "sync", \
-     "--worker-connections", "1000", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "100", \
-     "--timeout", "300", \
-     "--keep-alive", "2", \
-     "--log-level", "info", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--preload", \
-     "app:app"]
+# Production command using vanilla Python 3.9 http.server
+CMD ["python3", "app.py"]
 
 # =============================================================================
 # ENVIRONMENT VARIABLES:

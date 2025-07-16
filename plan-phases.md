@@ -753,6 +753,16 @@ All endpoints must:
 - Error handling with user-friendly messages
 - Performance optimization (lazy loading, caching)
 
+### USER EXPERIENCE REQUIREMENTS
+**MINIMAL TYPING PRINCIPLE**: Reduce manual text input wherever possible
+- **Date Fields**: MUST use HTML5 date pickers (type="date") for all date inputs
+- **Dropdown Fields**: Use select elements with predefined options when applicable
+- **Number Fields**: Use HTML5 number inputs with step validation for numeric fields
+- **Boolean Fields**: Use checkboxes or toggle switches instead of text
+- **Auto-completion**: Implement for frequently used values where appropriate
+- **Form Validation**: Real-time validation with clear visual feedback
+- **Default Values**: Pre-populate sensible defaults to minimize user input
+
 ### REPORT GENERATOR REQUIREMENTS
 Each report must:
 - Inherit from base_report.py
