@@ -9,11 +9,14 @@
 FROM amazonlinux:2023
 
 # Install minimal runtime dependencies (using built-in Python 3.9)
+# Note: python3-pip removed due to package conflicts - using ensurepip instead
 RUN dnf update -y && dnf install -y --allowerasing \
-    python3-pip \
     curl \
     shadow-utils \
     && dnf clean all
+
+# Ensure pip is available using ensurepip
+RUN python3 -m ensurepip --upgrade
 
 # Create non-root user
 RUN groupadd -g 1001 appgroup && \
