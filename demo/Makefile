@@ -52,28 +52,41 @@ test-reports: health ## Test all report types
 	@curl -s -X POST $(SUBMISSION_URL)/api/jobs \
 		-H "Content-Type: application/json" \
 		-d '{"name":"Test-CMBS","jobDefinitionUri":"cmbs-user-manual","arguments":{"start_date":"2024-01-01","end_date":"2024-12-31","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
-		| jq -r '.id' > $(OUTPUTS_DIR)/cmbs-job-id.txt
+		| tee $(OUTPUTS_DIR)/cmbs-response.json | jq -r '.id' > $(OUTPUTS_DIR)/cmbs-job-id.txt
 	@echo "  Job ID: $$(cat $(OUTPUTS_DIR)/cmbs-job-id.txt)"
+	@echo "  Response: $(OUTPUTS_DIR)/cmbs-response.json"
+	@echo "  Polling status..."
+	@curl -s $(POLLING_URL)/api/jobs/$$(cat $(OUTPUTS_DIR)/cmbs-job-id.txt)/status | tee $(OUTPUTS_DIR)/cmbs-status.json | jq -r '.status'
 	@echo "Testing RMBS report..."
 	@curl -s -X POST $(SUBMISSION_URL)/api/jobs \
 		-H "Content-Type: application/json" \
-		-d '{"name":"Test-RMBS","jobDefinitionUri":"rmbs-performance","arguments":{"report_date":"2024-12-01","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
-		| jq -r '.id' > $(OUTPUTS_DIR)/rmbs-job-id.txt
+		-d '{"name":"Test-RMBS","jobDefinitionUri":"rmbs-performance","arguments":{"report_date":"2024-12-01","performance_metrics":"Standard","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
+		| tee $(OUTPUTS_DIR)/rmbs-response.json | jq -r '.id' > $(OUTPUTS_DIR)/rmbs-job-id.txt
 	@echo "  Job ID: $$(cat $(OUTPUTS_DIR)/rmbs-job-id.txt)"
+	@echo "  Response: $(OUTPUTS_DIR)/rmbs-response.json"
+	@echo "  Polling status..."
+	@curl -s $(POLLING_URL)/api/jobs/$$(cat $(OUTPUTS_DIR)/rmbs-job-id.txt)/status | tee $(OUTPUTS_DIR)/rmbs-status.json | jq -r '.status'
 	@echo "Testing VaR report..."
 	@curl -s -X POST $(SUBMISSION_URL)/api/jobs \
 		-H "Content-Type: application/json" \
-		-d '{"name":"Test-VaR","jobDefinitionUri":"var-daily","arguments":{"calculation_date":"2024-12-15","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
-		| jq -r '.id' > $(OUTPUTS_DIR)/var-job-id.txt
+		-d '{"name":"Test-VaR","jobDefinitionUri":"var-daily","arguments":{"calculation_date":"2024-12-15","confidence_level":"99%","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
+		| tee $(OUTPUTS_DIR)/var-response.json | jq -r '.id' > $(OUTPUTS_DIR)/var-job-id.txt
 	@echo "  Job ID: $$(cat $(OUTPUTS_DIR)/var-job-id.txt)"
+	@echo "  Response: $(OUTPUTS_DIR)/var-response.json"
+	@echo "  Polling status..."
+	@curl -s $(POLLING_URL)/api/jobs/$$(cat $(OUTPUTS_DIR)/var-job-id.txt)/status | tee $(OUTPUTS_DIR)/var-status.json | jq -r '.status'
 	@echo "$(GREEN)All report tests completed$(NC)"
+	@echo "$(BLUE)Status files saved:$(NC)"
+	@echo "  - $(OUTPUTS_DIR)/cmbs-status.json"
+	@echo "  - $(OUTPUTS_DIR)/rmbs-status.json"
+	@echo "  - $(OUTPUTS_DIR)/var-status.json"
 
 demo: health ## Run simple demo
 	@echo "$(BLUE)Running demo...$(NC)"
 	@echo "1. Submitting test job..."
 	@JOB_ID=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
 		-H "Content-Type: application/json" \
-		-d '{"name":"Demo-Job","jobDefinitionUri":"var-daily","arguments":{"calculation_date":"2024-12-15","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
+		-d '{"name":"Demo-Job","jobDefinitionUri":"var-daily","arguments":{"calculation_date":"2024-12-15","confidence_level":"99%","username":"$(DEMO_USER)"},"submitted_by":"$(DEMO_USER)","priority":5}' \
 		| jq -r '.id'); \
 	echo "Job ID: $$JOB_ID"; \
 	echo "2. Checking status..."; \
