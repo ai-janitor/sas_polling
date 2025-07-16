@@ -81,7 +81,9 @@ class ReportSelector {
 
         const html = `
             <div class="report-categories">
-                ${this.filteredReports.categories.map(category => this.renderCategory(category)).join('')}
+                ${this.filteredReports.categories.map(category => 
+                    category.subcategories.map(subcategory => this.renderSubcategory(category, subcategory)).join('')
+                ).join('')}
             </div>
         `;
 
@@ -89,8 +91,8 @@ class ReportSelector {
         this.setupReportEventListeners();
     }
 
-    renderCategory(category) {
-        const filteredReports = this.filterReportsInCategory(category);
+    renderSubcategory(category, subcategory) {
+        const filteredReports = this.filterReportsInSubcategory(subcategory);
         
         if (filteredReports.length === 0) {
             return '';
@@ -98,7 +100,7 @@ class ReportSelector {
 
         return `
             <div class="report-category">
-                <h3 class="category-title">${category.name}</h3>
+                <h3 class="category-title">${category.name} - ${subcategory.name}</h3>
                 <div class="report-grid">
                     ${filteredReports.map(report => this.renderReportCard(report)).join('')}
                 </div>
@@ -122,12 +124,16 @@ class ReportSelector {
         `;
     }
 
-    filterReportsInCategory(category) {
+    filterReportsInSubcategory(subcategory) {
+        if (!subcategory.reports) {
+            return [];
+        }
+        
         if (!this.searchTerm) {
-            return category.reports;
+            return subcategory.reports;
         }
 
-        return category.reports.filter(report => 
+        return subcategory.reports.filter(report => 
             report.name.toLowerCase().includes(this.searchTerm) ||
             report.description.toLowerCase().includes(this.searchTerm) ||
             report.id.toLowerCase().includes(this.searchTerm)
@@ -146,8 +152,11 @@ class ReportSelector {
                 ...this.reports,
                 categories: this.reports.categories.map(category => ({
                     ...category,
-                    reports: this.filterReportsInCategory(category)
-                })).filter(category => category.reports.length > 0)
+                    subcategories: category.subcategories.map(subcategory => ({
+                        ...subcategory,
+                        reports: this.filterReportsInSubcategory(subcategory)
+                    })).filter(subcategory => subcategory.reports.length > 0)
+                })).filter(category => category.subcategories.length > 0)
             };
         }
 
@@ -222,9 +231,11 @@ class ReportSelector {
         }
 
         for (const category of this.reports.categories) {
-            const report = category.reports.find(r => r.id === reportId);
-            if (report) {
-                return report;
+            for (const subcategory of category.subcategories) {
+                const report = subcategory.reports.find(r => r.id === reportId);
+                if (report) {
+                    return report;
+                }
             }
         }
         

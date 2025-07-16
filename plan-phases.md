@@ -609,6 +609,26 @@ Each Dockerfile must:
 - **All configuration via ARG and ENV from config files**
 - Install Python 3.11+ and Node.js 18+ on Amazon Linux 2023
 
+### DOCKER NETWORKING RULES
+**CRITICAL DOCKER CONCEPT**: 
+- **ALL services inside containers MUST use standard ports (GUI: 3000, Submission: 5000, Polling: 5001)**
+- **Internal container communication ALWAYS uses standard ports**
+- **External port mapping via docker run -p can be different (e.g., -p 8080:3000)**
+- **Services inside Docker network communicate via standard internal ports**
+- **Only external access needs port mapping for conflict resolution**
+- **Example**: nginx inside container uses proxy_pass http://job-submission:5000 (standard internal port)
+- **Example**: External access via docker run -p 8002:5000 maps host port 8002 to container port 5000
+- **MANDATORY**: Service configuration inside containers always uses standard ports regardless of external mapping
+
+### DATAFIT PORT ALLOCATION STRATEGY
+**SEQUENTIAL PORT RANGE**: DataFit services use sequential external ports 8100-8199 to avoid conflicts
+- **GUI Service**: External port 8100 → Internal port 3000 (docker run -p 8100:3000)
+- **Job Submission**: External port 8101 → Internal port 5000 (docker run -p 8101:5000)  
+- **Job Polling**: External port 8102 → Internal port 5001 (docker run -p 8102:5001)
+- **Future Services**: External ports 8103-8199 available for expansion
+- **Benefits**: Predictable port range, no conflicts with common services, easy to remember sequence
+- **Configuration**: All external ports defined in config.dev.env with _EXTERNAL_PORT variables
+
 ### AMAZON LINUX 2023 REQUIREMENTS
 All Docker containers MUST use Amazon Linux 2023 as the base image:
 

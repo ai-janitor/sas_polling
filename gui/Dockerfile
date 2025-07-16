@@ -1,11 +1,12 @@
 # =============================================================================
-# DATAFIT GUI SERVICE DOCKERFILE
+# DATAFIT GUI SERVICE DOCKERFILE - AMAZON LINUX 2023
 # =============================================================================
 # Purpose: Containerize the GUI Single Page Application
 # Technology: Multi-stage build with Node.js for development and Nginx for production
-# Base Image: Node.js 18 Alpine for security and size optimization
+# Base Image: Amazon Linux 2023 with Node.js 20+ and Nginx
 #
 # STRICT REQUIREMENTS:
+# - Amazon Linux 2023 base image MANDATORY
 # - Multi-stage build for production optimization
 # - Non-root user for security
 # - Health checks for container monitoring
@@ -19,7 +20,7 @@
 #
 # SECURITY FEATURES:
 # - Non-root user execution
-# - Minimal attack surface with Alpine Linux
+# - Minimal attack surface
 # - No unnecessary packages or tools
 # - Read-only root filesystem support
 #
@@ -28,14 +29,21 @@
 # =============================================================================
 
 # Development stage
-FROM node:18-alpine AS development
+FROM amazonlinux:2023 AS development
+
+# Install Node.js 20 and development tools
+RUN dnf update -y && dnf install -y \
+    nodejs20 \
+    nodejs20-npm \
+    curl \
+    && dnf clean all
+
+# Create non-root user
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -m -s /bin/bash nextjs
 
 # Set working directory
 WORKDIR /app
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
 
 # Copy package files for dependency installation
 COPY package*.json ./
@@ -65,7 +73,13 @@ CMD ["npm", "run", "dev"]
 # =============================================================================
 
 # Production build stage
-FROM node:18-alpine AS builder
+FROM amazonlinux:2023 AS builder
+
+# Install Node.js 20 for building
+RUN dnf update -y && dnf install -y \
+    nodejs20 \
+    nodejs20-npm \
+    && dnf clean all
 
 # Set working directory
 WORKDIR /app
@@ -86,14 +100,17 @@ RUN npm run build
 # =============================================================================
 
 # Production runtime stage
-FROM nginx:1.24-alpine AS production
+FROM amazonlinux:2023 AS production
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install Nginx and curl for health checks
+RUN dnf update -y && dnf install -y --allowerasing \
+    nginx \
+    curl \
+    && dnf clean all
 
 # Create non-root user for Nginx
-RUN addgroup -g 1001 -S nginx_app && \
-    adduser -S nginx_app -u 1001 -G nginx_app
+RUN groupadd -g 1001 nginx_app && \
+    useradd -u 1001 -g nginx_app -m -s /bin/bash nginx_app
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -102,8 +119,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create directories and set permissions
-RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run && \
-    chown -R nginx_app:nginx_app /var/cache/nginx /var/log/nginx /var/run /usr/share/nginx/html && \
+RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/proxy /var/lib/nginx/tmp/fastcgi /var/lib/nginx/tmp/uwsgi /var/lib/nginx/tmp/scgi && \
+    chown -R nginx_app:nginx_app /var/cache/nginx /var/log/nginx /var/run /var/lib/nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
 # Switch to non-root user
@@ -115,7 +132,7 @@ EXPOSE ${GUI_PORT}
 
 # Health check for production
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${GUI_PORT}/health || exit 1
+    CMD curl -f http://localhost:3000/ || exit 1
 
 # Production command
 CMD ["nginx", "-g", "daemon off;"]

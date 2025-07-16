@@ -1,0 +1,398 @@
+name: Phase 5A Backend Unit Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'tests/**'
+      - 'src/**'
+      - 'job_submission/**'
+      - 'job_polling/**'
+      - 'reports/**'
+      - 'infrastructure/**'
+      - '*.py'
+      - 'requirements-test.txt'
+      - 'pytest.ini'
+      - '.coveragerc'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'tests/**'
+      - 'src/**'
+      - 'job_submission/**'
+      - 'job_polling/**' 
+      - 'reports/**'
+      - 'infrastructure/**'
+      - '*.py'
+      - 'requirements-test.txt'
+      - 'pytest.ini'
+      - '.coveragerc'
+  workflow_dispatch:
+    inputs:
+      coverage_threshold:
+        description: 'Coverage threshold percentage'
+        required: false
+        default: '80'
+        type: string
+      test_marker:
+        description: 'Pytest marker to run (unit, integration, performance)'
+        required: false
+        default: 'unit'
+        type: choice
+        options:
+          - unit
+          - integration
+          - performance
+          - all
+
+jobs:
+  test:
+    name: Phase 5A Backend Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+        
+    - name: Verify test structure
+      run: |
+        echo "Checking Phase 5A test structure..."
+        for dir in tests/test_job_submission tests/test_job_polling tests/test_reports tests/test_infrastructure tests/test_mocks tests/test_fixtures; do
+          if [ -d "$dir" ]; then
+            echo "✓ Found $dir"
+          else
+            echo "✗ Missing $dir"
+            exit 1
+          fi
+        done
+        
+    - name: Count test files
+      run: |
+        echo "Test file counts:"
+        echo "Job submission: $(find tests/test_job_submission -name 'test_*.py' 2>/dev/null | wc -l)"
+        echo "Job polling: $(find tests/test_job_polling -name 'test_*.py' 2>/dev/null | wc -l)"
+        echo "Reports: $(find tests/test_reports -name 'test_*.py' 2>/dev/null | wc -l)"
+        echo "Infrastructure: $(find tests/test_infrastructure -name 'test_*.py' 2>/dev/null | wc -l)"
+        echo "Mocks: $(find tests/test_mocks -name 'test_*.py' 2>/dev/null | wc -l)"
+        echo "Fixtures: $(find tests/test_fixtures -name 'test_*.py' 2>/dev/null | wc -l)"
+        echo "Total: $(find tests -name 'test_*.py' | wc -l)"
+        
+    - name: Run Phase 5A Unit Tests
+      run: |
+        # Set test marker based on input or default to unit
+        TEST_MARKER="${{ github.event.inputs.test_marker || 'unit' }}"
+        COVERAGE_THRESHOLD="${{ github.event.inputs.coverage_threshold || '80' }}"
+        
+        echo "Running tests with marker: $TEST_MARKER"
+        echo "Coverage threshold: $COVERAGE_THRESHOLD%"
+        
+        # Create reports directory
+        mkdir -p reports
+        
+        # Run tests with coverage
+        pytest tests/ \
+          --cov=src \
+          --cov=job_submission \
+          --cov=job_polling \
+          --cov=reports \
+          --cov=infrastructure \
+          --cov-report=html:reports/coverage_html \
+          --cov-report=xml:reports/coverage.xml \
+          --cov-report=json:reports/coverage.json \
+          --cov-report=term-missing \
+          --cov-fail-under=$COVERAGE_THRESHOLD \
+          --html=reports/pytest_report.html \
+          --self-contained-html \
+          --json-report \
+          --json-report-file=reports/pytest_report.json \
+          --junit-xml=reports/junit.xml \
+          -v \
+          --tb=short \
+          --durations=10 \
+          -m "$TEST_MARKER"
+          
+    - name: Generate coverage badge
+      if: matrix.python-version == '3.11'
+      run: |
+        # Extract coverage percentage
+        COVERAGE_PCT=$(coverage report | tail -1 | awk '{print $4}' | sed 's/%//')
+        echo "COVERAGE_PCT=$COVERAGE_PCT" >> $GITHUB_ENV
+        
+        # Generate coverage summary
+        coverage report --show-missing > reports/coverage_summary.txt
+        echo "Coverage: $COVERAGE_PCT%" >> reports/coverage_summary.txt
+        
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./reports/coverage.xml
+        flags: phase5a-backend
+        name: phase5a-backend-tests
+        fail_ci_if_error: false
+        
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports-python-${{ matrix.python-version }}
+        path: |
+          reports/
+          .coverage
+        retention-days: 30
+        
+    - name: Upload coverage reports  
+      if: matrix.python-version == '3.11'
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-reports
+        path: |
+          reports/coverage_html/
+          reports/coverage.xml
+          reports/coverage.json
+          reports/coverage_summary.txt
+        retention-days: 30
+        
+    - name: Comment coverage on PR
+      if: github.event_name == 'pull_request' && matrix.python-version == '3.11'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Read coverage summary
+          let coverageSummary = '';
+          try {
+            coverageSummary = fs.readFileSync('reports/coverage_summary.txt', 'utf8');
+          } catch (error) {
+            console.log('Could not read coverage summary');
+            return;
+          }
+          
+          // Extract coverage percentage
+          const coverageMatch = coverageSummary.match(/Coverage: (\d+)%/);
+          const coveragePct = coverageMatch ? coverageMatch[1] : 'Unknown';
+          
+          // Create comment body
+          const commentBody = `## 📊 Phase 5A Backend Test Coverage Report
+          
+          **Coverage:** ${coveragePct}%
+          **Python Version:** ${{ matrix.python-version }}
+          **Threshold:** ${{ github.event.inputs.coverage_threshold || '80' }}%
+          
+          ### Coverage Details
+          \`\`\`
+          ${coverageSummary}
+          \`\`\`
+          
+          ### Test Reports
+          - 📄 [Detailed Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - 🧪 [Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          *This comment was automatically generated by the Phase 5A test workflow.*`;
+          
+          // Post comment on PR
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: commentBody
+          });
+
+  # Job to run performance tests separately
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_marker == 'performance' || github.event.inputs.test_marker == 'all'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+        
+    - name: Run performance tests
+      run: |
+        mkdir -p reports
+        pytest tests/ \
+          -m "performance" \
+          --benchmark-only \
+          --benchmark-sort=mean \
+          --benchmark-json=reports/benchmark.json \
+          -v
+          
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports
+        path: reports/benchmark.json
+        retention-days: 30
+
+  # Job to validate Phase 5A completion
+  validate-phase5a:
+    name: Validate Phase 5A Completion
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate Phase 5A deliverables
+      run: |
+        echo "🔍 Validating Phase 5A Backend Unit Testing completion..."
+        
+        # Check required test directories
+        REQUIRED_DIRS=(
+          "tests/test_job_submission"
+          "tests/test_job_polling"
+          "tests/test_reports"
+          "tests/test_infrastructure"
+          "tests/test_mocks"
+          "tests/test_fixtures"
+        )
+        
+        MISSING_DIRS=()
+        for dir in "${REQUIRED_DIRS[@]}"; do
+          if [ -d "$dir" ]; then
+            echo "✅ Found $dir"
+          else
+            echo "❌ Missing $dir"
+            MISSING_DIRS+=("$dir")
+          fi
+        done
+        
+        # Check required configuration files
+        REQUIRED_FILES=(
+          "pytest.ini"
+          ".coveragerc"
+          "requirements-test.txt"
+          "conftest.py"
+          "tox.ini"
+          "Makefile"
+        )
+        
+        MISSING_FILES=()
+        for file in "${REQUIRED_FILES[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ Found $file"
+          else
+            echo "❌ Missing $file"
+            MISSING_FILES+=("$file")
+          fi
+        done
+        
+        # Count test files and validate against Phase 5A requirements
+        echo ""
+        echo "📊 Test File Count Validation:"
+        
+        JOB_SUBMISSION_TESTS=$(find tests/test_job_submission -name 'test_*.py' 2>/dev/null | wc -l)
+        JOB_POLLING_TESTS=$(find tests/test_job_polling -name 'test_*.py' 2>/dev/null | wc -l)
+        REPORT_TESTS=$(find tests/test_reports -name 'test_*.py' 2>/dev/null | wc -l)
+        INFRASTRUCTURE_TESTS=$(find tests/test_infrastructure -name 'test_*.py' 2>/dev/null | wc -l)
+        MOCK_TESTS=$(find tests/test_mocks -name 'test_*.py' 2>/dev/null | wc -l)
+        FIXTURE_TESTS=$(find tests/test_fixtures -name 'test_*.py' 2>/dev/null | wc -l)
+        
+        echo "Job Submission Tests: $JOB_SUBMISSION_TESTS (expected: ≥2)"
+        echo "Job Polling Tests: $JOB_POLLING_TESTS (expected: ≥4)"
+        echo "Report Generator Tests: $REPORT_TESTS (expected: ≥7)"
+        echo "Infrastructure Tests: $INFRASTRUCTURE_TESTS (expected: ≥4)"
+        echo "Mock Tests: $MOCK_TESTS (expected: ≥1)"
+        echo "Fixture Tests: $FIXTURE_TESTS (expected: ≥1)"
+        
+        # Validation summary
+        VALIDATION_PASSED=true
+        
+        if [ ${#MISSING_DIRS[@]} -gt 0 ]; then
+          echo "❌ Missing directories: ${MISSING_DIRS[*]}"
+          VALIDATION_PASSED=false
+        fi
+        
+        if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+          echo "❌ Missing files: ${MISSING_FILES[*]}"
+          VALIDATION_PASSED=false
+        fi
+        
+        if [ $JOB_SUBMISSION_TESTS -lt 2 ] || [ $JOB_POLLING_TESTS -lt 4 ] || [ $REPORT_TESTS -lt 7 ] || [ $INFRASTRUCTURE_TESTS -lt 4 ] || [ $MOCK_TESTS -lt 1 ] || [ $FIXTURE_TESTS -lt 1 ]; then
+          echo "❌ Insufficient test files for Phase 5A requirements"
+          VALIDATION_PASSED=false
+        fi
+        
+        echo ""
+        if [ "$VALIDATION_PASSED" = true ]; then
+          echo "🎉 Phase 5A Backend Unit Testing validation PASSED!"
+          echo "✅ All required directories, files, and test counts meet Phase 5A requirements"
+        else
+          echo "❌ Phase 5A Backend Unit Testing validation FAILED!"
+          echo "🔧 Please review missing components above"
+          exit 1
+        fi
+
+  # Summary job that depends on all other jobs
+  summary:
+    name: Phase 5A Summary
+    runs-on: ubuntu-latest
+    needs: [test, validate-phase5a]
+    if: always()
+    
+    steps:
+    - name: Generate Phase 5A summary
+      run: |
+        echo "## 📋 Phase 5A Backend Unit Testing Summary"
+        echo ""
+        echo "**Workflow:** ${{ github.workflow }}"
+        echo "**Run ID:** ${{ github.run_id }}"
+        echo "**Triggered by:** ${{ github.event_name }}"
+        echo "**Branch:** ${{ github.ref_name }}"
+        echo ""
+        
+        # Check job statuses
+        TEST_STATUS="${{ needs.test.result }}"
+        VALIDATION_STATUS="${{ needs.validate-phase5a.result }}"
+        
+        echo "### Job Results"
+        echo "- **Test Execution:** $TEST_STATUS"
+        echo "- **Phase 5A Validation:** $VALIDATION_STATUS"
+        echo ""
+        
+        if [ "$TEST_STATUS" = "success" ] && [ "$VALIDATION_STATUS" = "success" ]; then
+          echo "🎉 **Overall Status: SUCCESS**"
+          echo ""
+          echo "✅ Phase 5A Backend Unit Testing completed successfully!"
+          echo "✅ All test validations passed"
+          echo "✅ Coverage requirements met"
+          echo ""
+          echo "🚀 **Ready for Phase 5B: Frontend & Integration Testing**"
+        else
+          echo "❌ **Overall Status: FAILED**"
+          echo ""
+          echo "Please review the failed jobs above and address any issues."
+        fi

@@ -1,0 +1,216 @@
+# Coverage configuration file
+[run]
+# Source code to analyze
+source = src/
+
+# Include patterns
+include = 
+    src/*
+    job_submission/*
+    job_polling/*
+    reports/*
+    infrastructure/*
+
+# Exclude patterns
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.venv/*
+    */migrations/*
+    */manage.py
+    */setup.py
+    */conftest.py
+    */*/conftest.py
+
+# Parallel processing
+parallel = true
+
+# Coverage data file
+data_file = .coverage
+
+# Enable branch coverage
+branch = true
+
+# Concurrency settings for async code
+concurrency = 
+    thread
+    multiprocessing
+
+# Context for coverage
+context = '${COVERAGE_CONTEXT}'
+
+[report]
+# Reporting options
+show_missing = true
+skip_covered = false
+skip_empty = true
+
+# Precision for percentages
+precision = 2
+
+# Sort by name
+sort = Name
+
+# Exclude lines from coverage
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if False:
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about typing imports
+    if TYPE_CHECKING:
+    
+    # Don't complain about protocol methods
+    \.\.\.
+    
+    # Don't complain about pass statements
+    pass
+
+# Partial branches to exclude
+partial_branches =
+    # Have to re-enable the standard pragma
+    pragma: no branch
+    
+    # Don't complain about non-runnable code:
+    if 0:
+    if False:
+
+# Ignore errors for source code not found
+ignore_errors = false
+
+[html]
+# HTML report directory
+directory = htmlcov
+
+# HTML report title
+title = DataFit Coverage Report
+
+# Show contexts in HTML report
+show_contexts = true
+
+# Skip files with no statements
+skip_empty = true
+
+# Skip files that are 100% covered
+skip_covered = false
+
+[xml]
+# XML report file
+output = coverage.xml
+
+[json]
+# JSON report file
+output = coverage.json
+
+# Show contexts in JSON report
+show_contexts = true
+
+[paths]
+# Path mapping for combining coverage from different environments
+source =
+    src/
+    */site-packages/src/
+    */lib/python*/site-packages/src/
+    C:\*\site-packages\src\
+
+[coverage:paths]
+# Additional path mappings
+source =
+   src
+   */site-packages
+
+# Minimum coverage thresholds
+[coverage:report]
+# Fail if total coverage is below this threshold
+fail_under = 80
+
+# Show lines that weren't covered
+show_missing = true
+
+# Include a column showing the number of missing lines
+skip_empty = true
+
+[coverage:html]
+# HTML-specific settings
+directory = htmlcov
+title = DataFit Test Coverage Report
+show_contexts = true
+
+[coverage:xml]
+# XML-specific settings
+output = coverage.xml
+package_depth = 2
+
+# Coverage for specific modules
+[coverage:run:include]
+# Only include our source code
+src/*
+job_submission/*
+job_polling/*
+reports/*
+infrastructure/*
+
+[coverage:run:omit]
+# Exclude test files and other non-source files
+*/tests/*
+*/test_*
+*/*test*
+*/conftest.py
+*/setup.py
+*/manage.py
+*/__pycache__/*
+*/migrations/*
+*/venv/*
+*/env/*
+*/.venv/*
+*/site-packages/*
+*/dist/*
+*/build/*
+*/.git/*
+*/.pytest_cache/*
+*/htmlcov/*
+
+# Plugin configuration
+[coverage:run:plugins]
+# Add any coverage plugins here if needed
+
+# Context configuration for different test types
+[coverage:run:contexts]
+# Define contexts for different test types
+unit = pytest -m unit
+integration = pytest -m integration
+performance = pytest -m performance
+
+# Parallel mode configuration
+[coverage:run:parallel]
+# Settings for parallel coverage collection
+multiprocessing = true
+thread = true
+
+# Dynamic context configuration
+[coverage:run:dynamic_context]
+# Use test function names as contexts
+test_function = true
+
+# Source package configuration
+[coverage:run:source_pkgs]
+# Source packages to include
+datafit = src

@@ -60,7 +60,7 @@ import uuid
 import logging
 import requests
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -84,10 +84,10 @@ if os.getenv('CORS_ENABLED', 'true').lower() == 'true':
 
 # Configure rate limiting
 limiter = Limiter(
-    app,
     key_func=get_remote_address,
     default_limits=[f"{os.getenv('RATE_LIMIT_REQUESTS', '100')}/minute"]
 )
+limiter.init_app(app)
 
 # Configure logging
 logging.basicConfig(

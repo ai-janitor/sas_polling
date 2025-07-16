@@ -1,11 +1,12 @@
 # =============================================================================
-# DATAFIT JOB POLLING SERVICE DOCKERFILE
+# DATAFIT JOB POLLING SERVICE DOCKERFILE - AMAZON LINUX 2023
 # =============================================================================
 # Purpose: Containerize the job polling service with queue management
 # Technology: Python 3.11 with Flask/FastAPI and background workers
-# Base Image: Python 3.11 Alpine for security and size optimization
+# Base Image: Amazon Linux 2023 with Python 3.11
 #
 # STRICT REQUIREMENTS:
+# - Amazon Linux 2023 base image MANDATORY
 # - Multi-stage build for production optimization
 # - Non-root user for security
 # - Health checks for container monitoring
@@ -19,7 +20,7 @@
 #
 # SECURITY FEATURES:
 # - Non-root user execution
-# - Minimal attack surface with Alpine Linux
+# - Minimal attack surface
 # - No unnecessary packages or tools
 # - Read-only root filesystem support
 # - Secure file handling for report generation
@@ -29,15 +30,22 @@
 # =============================================================================
 
 # Dependencies stage
-FROM python:3.11-alpine AS dependencies
+FROM amazonlinux:2023 AS dependencies
 
-# Install system dependencies for report generation
-RUN apk add --no-cache \
+# Install Python 3.11 and development tools for report generation
+RUN dnf update -y && dnf install -y --allowerasing \
+    python3.11 \
+    python3.11-pip \
+    python3.11-devel \
     gcc \
-    musl-dev \
-    libffi-dev \
-    openssl-dev \
-    curl
+    openssl-devel \
+    libffi-devel \
+    curl \
+    && dnf clean all
+
+# Set Python 3.11 as default python3
+RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.11 1
 
 # Set working directory
 WORKDIR /app
@@ -46,29 +54,37 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
 # =============================================================================
 
 # Production runtime stage
-FROM python:3.11-alpine AS production
+FROM amazonlinux:2023 AS production
 
 # Install runtime dependencies
-RUN apk add --no-cache \
+RUN dnf update -y && dnf install -y --allowerasing \
+    python3.11 \
+    python3.11-pip \
     curl \
-    dumb-init
+    shadow-utils \
+    && dnf clean all
+
+# Set Python 3.11 as default python3
+RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.11 1
 
 # Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -m -s /bin/bash appuser
 
 # Set working directory
 WORKDIR /app
 
-# Copy Python dependencies from dependencies stage
-COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=dependencies /usr/local/bin /usr/local/bin
+# Install Python dependencies directly in production stage
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -99,16 +115,13 @@ EXPOSE ${POLLING_PORT}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:${POLLING_PORT}/health || exit 1
-
-# Use dumb-init for proper signal handling
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+    CMD curl -f http://localhost:5001/health || exit 1
 
 # Production command with background workers
-CMD ["python", "-m", "gunicorn", \
-     "--bind", "0.0.0.0:${POLLING_PORT}", \
+CMD ["python3", "-m", "gunicorn", \
+     "--bind", "0.0.0.0:5001", \
      "--workers", "2", \
-     "--worker-class", "gevent", \
+     "--worker-class", "sync", \
      "--worker-connections", "1000", \
      "--max-requests", "1000", \
      "--max-requests-jitter", "100", \

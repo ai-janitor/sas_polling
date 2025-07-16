@@ -119,9 +119,17 @@ class DataFitApp {
             section.classList.remove('active');
         });
         
-        document.getElementById(`nav-${view}`).classList.add('active');
-        document.getElementById(`nav-${view}`).setAttribute('aria-pressed', 'true');
-        document.getElementById(`${view}-section`).classList.add('active');
+        const navElement = document.getElementById(`nav-${view}`);
+        const sectionElement = document.getElementById(`${view}-section`);
+        
+        if (navElement) {
+            navElement.classList.add('active');
+            navElement.setAttribute('aria-pressed', 'true');
+        }
+        
+        if (sectionElement) {
+            sectionElement.classList.add('active');
+        }
         
         this.currentView = view;
         

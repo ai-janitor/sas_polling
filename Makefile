@@ -1,408 +1,364 @@
-# =============================================================================
-# DATAFIT INFRASTRUCTURE MAKEFILE
-# =============================================================================
-# Purpose: Single point of control for all infrastructure operations
-# Configuration: Reads all settings from config.dev.env
-# 
-# STRICT REQUIREMENTS:
-# - NO hardcoded values anywhere in the infrastructure
-# - All ports, URLs, credentials come from config.dev.env
-# - Single command deployment and management
-# - Environment-specific overrides supported
-# - Proper cleanup and resource management
-#
-# AVAILABLE TARGETS:
-# - build: Build all Docker images
-# - deploy: Deploy all services 
-# - start: Start all services
-# - stop: Stop all services
-# - clean: Clean up containers, images, and volumes
-# - logs: Show logs from all services
-# - status: Show status of all services
-# - test: Run all tests
-# - dev: Start in development mode
-# - prod: Deploy in production mode
-# =============================================================================
+# DataFit Testing and Development Makefile
+# Usage: make [target]
 
-# Load configuration from environment file
-include config.dev.env
-export
+.PHONY: help test test-unit test-integration test-performance test-all
+.PHONY: coverage coverage-html coverage-xml coverage-report
+.PHONY: lint format security docs clean install-dev
+.PHONY: run-tests run-coverage run-lint run-security
+.PHONY: setup-env check-requirements benchmark profile
 
-# Set default environment if not specified
-ENV ?= dev
-CONFIG_FILE ?= config.$(ENV).env
-
-# Docker Compose configuration
-COMPOSE_FILE := docker-compose.yml
-COMPOSE_DEV_FILE := docker-compose.dev.yml
-COMPOSE_PROD_FILE := docker-compose.prod.yml
-COMPOSE_PROJECT_NAME := $(DOCKER_NETWORK)
-
-# Service names (from config)
-GUI_SERVICE := datafit-gui
-SUBMISSION_SERVICE := datafit-job-submission  
-POLLING_SERVICE := datafit-job-polling
-REDIS_SERVICE := datafit-redis
-
-# Build arguments from config
-BUILD_ARGS := \
-	--build-arg GUI_PORT=$(GUI_PORT) \
-	--build-arg SUBMISSION_PORT=$(SUBMISSION_PORT) \
-	--build-arg POLLING_PORT=$(POLLING_PORT) \
-	--build-arg NODE_ENV=$(DEV_MODE) \
-	--build-arg PYTHON_ENV=$(DEV_MODE)
-
-# Detect Docker Compose command (plugin vs standalone)
-DOCKER_COMPOSE := $(shell if docker compose version >/dev/null 2>&1; then echo "docker compose"; else echo "docker-compose"; fi)
-
-# Docker Compose command with config
-COMPOSE_CMD := $(DOCKER_COMPOSE) \
-	-f $(COMPOSE_FILE) \
-	-p $(COMPOSE_PROJECT_NAME) \
-	--env-file $(CONFIG_FILE)
-
-# Development compose command
-COMPOSE_DEV_CMD := $(COMPOSE_CMD) \
-	-f $(COMPOSE_DEV_FILE)
-
-# Production compose command  
-COMPOSE_PROD_CMD := $(COMPOSE_CMD) \
-	-f $(COMPOSE_PROD_FILE)
-
-# Colors for output
-RED := \033[0;31m
-GREEN := \033[0;32m
-YELLOW := \033[1;33m
-BLUE := \033[0;34m
-NC := \033[0m # No Color
-
-# =============================================================================
-# HELP TARGET
-# =============================================================================
-
-.PHONY: help
-help: ## Show this help message
-	@echo "$(BLUE)DataFit Infrastructure Management$(NC)"
-	@echo "=================================="
-	@echo ""
-	@echo "$(YELLOW)Configuration:$(NC)"
-	@echo "  Environment: $(ENV)"
-	@echo "  Config File: $(CONFIG_FILE)"
-	@echo "  Project:     $(COMPOSE_PROJECT_NAME)"
-	@echo ""
-	@echo "$(YELLOW)Available targets:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
-# =============================================================================
-# VALIDATION TARGETS
-# =============================================================================
-
-.PHONY: validate-config
-validate-config: ## Validate configuration file exists and is readable
-	@echo "$(BLUE)Validating configuration...$(NC)"
-	@if [ ! -f $(CONFIG_FILE) ]; then \
-		echo "$(RED)Error: Configuration file $(CONFIG_FILE) not found$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(GREEN)✓ Configuration file $(CONFIG_FILE) exists$(NC)"
-	@echo "$(BLUE)Checking required variables...$(NC)"
-	@for var in GUI_PORT SUBMISSION_PORT POLLING_PORT DOCKER_NETWORK; do \
-		value=$$(eval echo \$$$$var); \
-		if [ -z "$$value" ]; then \
-			echo "$(RED)Error: Required variable $$var not set$(NC)"; \
-			exit 1; \
-		fi; \
-		echo "$(GREEN)✓ $$var = $$value$(NC)"; \
-	done
-
-.PHONY: validate-docker
-validate-docker: ## Validate Docker and Docker Compose are available
-	@echo "$(BLUE)Validating Docker environment...$(NC)"
-	@docker --version > /dev/null 2>&1 || (echo "$(RED)Error: Docker not found$(NC)" && exit 1)
-	@(docker compose version > /dev/null 2>&1 || docker-compose --version > /dev/null 2>&1) || (echo "$(RED)Error: Docker Compose not found$(NC)" && exit 1)
-	@echo "$(GREEN)✓ Docker environment ready$(NC)"
-
-# =============================================================================
-# BUILD TARGETS
-# =============================================================================
-
-.PHONY: build
-build: validate-config validate-docker ## Build all Docker images
-	@echo "$(BLUE)Building all services...$(NC)"
-	$(COMPOSE_CMD) build $(BUILD_ARGS)
-	@echo "$(GREEN)✓ All services built successfully$(NC)"
-
-.PHONY: build-gui
-build-gui: validate-config validate-docker ## Build GUI service only
-	@echo "$(BLUE)Building GUI service...$(NC)"
-	$(COMPOSE_CMD) build $(BUILD_ARGS) $(GUI_SERVICE)
-	@echo "$(GREEN)✓ GUI service built$(NC)"
-
-.PHONY: build-submission
-build-submission: validate-config validate-docker ## Build job submission service only
-	@echo "$(BLUE)Building job submission service...$(NC)"
-	$(COMPOSE_CMD) build $(BUILD_ARGS) $(SUBMISSION_SERVICE)
-	@echo "$(GREEN)✓ Job submission service built$(NC)"
-
-.PHONY: build-polling
-build-polling: validate-config validate-docker ## Build job polling service only
-	@echo "$(BLUE)Building job polling service...$(NC)"
-	$(COMPOSE_CMD) build $(BUILD_ARGS) $(POLLING_SERVICE)
-	@echo "$(GREEN)✓ Job polling service built$(NC)"
-
-.PHONY: rebuild
-rebuild: clean build ## Clean and rebuild all services
-	@echo "$(GREEN)✓ Complete rebuild finished$(NC)"
-
-# =============================================================================
-# DEPLOYMENT TARGETS
-# =============================================================================
-
-.PHONY: deploy
-deploy: build ## Deploy all services
-	@echo "$(BLUE)Deploying all services...$(NC)"
-	$(COMPOSE_CMD) up -d
-	@echo "$(BLUE)Waiting for services to be healthy...$(NC)"
-	@sleep 10
-	@$(MAKE) status
-	@echo "$(GREEN)✓ All services deployed$(NC)"
-
-.PHONY: dev
-dev: validate-config validate-docker ## Start in development mode with hot reload
-	@echo "$(BLUE)Starting development environment...$(NC)"
-	@if [ ! -f $(COMPOSE_DEV_FILE) ]; then \
-		echo "$(YELLOW)Creating development override file...$(NC)"; \
-		$(MAKE) create-dev-override; \
-	fi
-	$(COMPOSE_DEV_CMD) up --build
-	@echo "$(GREEN)✓ Development environment started$(NC)"
-
-.PHONY: prod
-prod: validate-config validate-docker ## Deploy in production mode
-	@echo "$(BLUE)Deploying production environment...$(NC)"
-	@if [ ! -f config.prod.env ]; then \
-		echo "$(YELLOW)Warning: config.prod.env not found, using $(CONFIG_FILE)$(NC)"; \
-	fi
-	$(COMPOSE_PROD_CMD) up -d --build
-	@echo "$(GREEN)✓ Production environment deployed$(NC)"
-
-# =============================================================================
-# SERVICE MANAGEMENT TARGETS
-# =============================================================================
-
-.PHONY: start
-start: validate-config ## Start all services
-	@echo "$(BLUE)Starting all services...$(NC)"
-	$(COMPOSE_CMD) start
-	@echo "$(GREEN)✓ All services started$(NC)"
-
-.PHONY: stop
-stop: ## Stop all services
-	@echo "$(BLUE)Stopping all services...$(NC)"
-	$(COMPOSE_CMD) stop
-	@echo "$(GREEN)✓ All services stopped$(NC)"
-
-.PHONY: restart
-restart: stop start ## Restart all services
-	@echo "$(GREEN)✓ All services restarted$(NC)"
-
-.PHONY: down
-down: ## Stop and remove all containers
-	@echo "$(BLUE)Stopping and removing containers...$(NC)"
-	$(COMPOSE_CMD) down
-	@echo "$(GREEN)✓ All containers stopped and removed$(NC)"
-
-# =============================================================================
-# MONITORING TARGETS
-# =============================================================================
-
-.PHONY: status
-status: ## Show status of all services
-	@echo "$(BLUE)Service Status:$(NC)"
-	@echo "==============="
-	$(COMPOSE_CMD) ps
-	@echo ""
-	@echo "$(BLUE)Health Checks:$(NC)"
-	@echo "=============="
-	@for service in $(GUI_SERVICE) $(SUBMISSION_SERVICE) $(POLLING_SERVICE); do \
-		echo -n "$$service: "; \
-		if docker exec $$service curl -f http://localhost:$$(docker port $$service | cut -d: -f2)/health > /dev/null 2>&1; then \
-			echo "$(GREEN)✓ Healthy$(NC)"; \
-		else \
-			echo "$(RED)✗ Unhealthy$(NC)"; \
-		fi; \
-	done
-
-.PHONY: logs
-logs: ## Show logs from all services
-	$(COMPOSE_CMD) logs -f
-
-.PHONY: logs-gui
-logs-gui: ## Show GUI service logs
-	$(COMPOSE_CMD) logs -f $(GUI_SERVICE)
-
-.PHONY: logs-submission
-logs-submission: ## Show job submission service logs
-	$(COMPOSE_CMD) logs -f $(SUBMISSION_SERVICE)
-
-.PHONY: logs-polling
-logs-polling: ## Show job polling service logs
-	$(COMPOSE_CMD) logs -f $(POLLING_SERVICE)
-
-# =============================================================================
-# TESTING TARGETS
-# =============================================================================
-
-.PHONY: test
-test: ## Run all tests
-	@echo "$(BLUE)Running all tests...$(NC)"
-	@if [ -d tests ]; then \
-		docker run --rm -v $(PWD):/app -w /app python:3.11-alpine \
-			sh -c "pip install -r job-submission/requirements.txt && \
-			       pip install -r job-polling/requirements.txt && \
-			       python -m pytest tests/ -v --cov=. --cov-report=term-missing"; \
-	else \
-		echo "$(YELLOW)No tests directory found$(NC)"; \
-	fi
-
-.PHONY: test-integration
-test-integration: deploy ## Run integration tests against running services
-	@echo "$(BLUE)Running integration tests...$(NC)"
-	@echo "Testing GUI service at http://localhost:$(GUI_PORT)"
-	@curl -f http://localhost:$(GUI_PORT)/health || echo "$(RED)GUI health check failed$(NC)"
-	@echo "Testing submission service at http://localhost:$(SUBMISSION_PORT)"
-	@curl -f http://localhost:$(SUBMISSION_PORT)/health || echo "$(RED)Submission health check failed$(NC)"
-	@echo "Testing polling service at http://localhost:$(POLLING_PORT)"
-	@curl -f http://localhost:$(POLLING_PORT)/health || echo "$(RED)Polling health check failed$(NC)"
-	@echo "$(GREEN)✓ Integration tests completed$(NC)"
-
-# =============================================================================
-# CLEANUP TARGETS
-# =============================================================================
-
-.PHONY: clean
-clean: ## Clean up containers, images, and volumes
-	@echo "$(BLUE)Cleaning up Docker resources...$(NC)"
-	$(COMPOSE_CMD) down -v --remove-orphans
-	@echo "$(YELLOW)Removing unused images...$(NC)"
-	docker image prune -f --filter "label=project=$(COMPOSE_PROJECT_NAME)"
-	@echo "$(YELLOW)Removing unused volumes...$(NC)"
-	docker volume prune -f
-	@echo "$(GREEN)✓ Cleanup completed$(NC)"
-
-.PHONY: clean-all
-clean-all: clean ## Clean everything including networks and system resources
-	@echo "$(BLUE)Deep cleaning Docker resources...$(NC)"
-	docker system prune -af --volumes
-	@echo "$(GREEN)✓ Deep cleanup completed$(NC)"
-
-.PHONY: clean-logs
-clean-logs: ## Clean up log files
-	@echo "$(BLUE)Cleaning log files...$(NC)"
-	@if [ -d "$(VOLUME_LOGS)" ]; then \
-		sudo rm -rf $(VOLUME_LOGS)/*; \
-		echo "$(GREEN)✓ Log files cleaned$(NC)"; \
-	else \
-		echo "$(YELLOW)Log directory $(VOLUME_LOGS) not found$(NC)"; \
-	fi
-
-# =============================================================================
-# DEVELOPMENT HELPERS
-# =============================================================================
-
-.PHONY: shell-gui
-shell-gui: ## Open shell in GUI container
-	docker exec -it $(GUI_SERVICE) /bin/sh
-
-.PHONY: shell-submission
-shell-submission: ## Open shell in job submission container
-	docker exec -it $(SUBMISSION_SERVICE) /bin/bash
-
-.PHONY: shell-polling
-shell-polling: ## Open shell in job polling container
-	docker exec -it $(POLLING_SERVICE) /bin/bash
-
-.PHONY: create-dev-override
-create-dev-override: ## Create development docker-compose override file
-	@echo "$(BLUE)Creating development override file...$(NC)"
-	@echo "# Development overrides for hot reload and debugging" > $(COMPOSE_DEV_FILE)
-	@echo "version: '3.8'" >> $(COMPOSE_DEV_FILE)
-	@echo "services:" >> $(COMPOSE_DEV_FILE)
-	@echo "  datafit-gui:" >> $(COMPOSE_DEV_FILE)
-	@echo "    build:" >> $(COMPOSE_DEV_FILE)
-	@echo "      target: development" >> $(COMPOSE_DEV_FILE)
-	@echo "    volumes:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - ./gui:/app:cached" >> $(COMPOSE_DEV_FILE)
-	@echo "    environment:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - NODE_ENV=development" >> $(COMPOSE_DEV_FILE)
-	@echo "      - GUI_HOT_RELOAD=\$${GUI_HOT_RELOAD}" >> $(COMPOSE_DEV_FILE)
-	@echo "    ports:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - \"\$${GUI_PORT}:\$${GUI_PORT}\"" >> $(COMPOSE_DEV_FILE)
-	@echo "  datafit-job-submission:" >> $(COMPOSE_DEV_FILE)
-	@echo "    volumes:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - ./job-submission:/app:cached" >> $(COMPOSE_DEV_FILE)
-	@echo "    environment:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - FLASK_ENV=development" >> $(COMPOSE_DEV_FILE)
-	@echo "      - FLASK_DEBUG=\$${DEV_DEBUG}" >> $(COMPOSE_DEV_FILE)
-	@echo "    ports:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - \"\$${SUBMISSION_PORT}:\$${SUBMISSION_PORT}\"" >> $(COMPOSE_DEV_FILE)
-	@echo "  datafit-job-polling:" >> $(COMPOSE_DEV_FILE)
-	@echo "    volumes:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - ./job-polling:/app:cached" >> $(COMPOSE_DEV_FILE)
-	@echo "      - ./reports:/app/reports:cached" >> $(COMPOSE_DEV_FILE)
-	@echo "    environment:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - FLASK_ENV=development" >> $(COMPOSE_DEV_FILE)
-	@echo "      - FLASK_DEBUG=\$${DEV_DEBUG}" >> $(COMPOSE_DEV_FILE)
-	@echo "    ports:" >> $(COMPOSE_DEV_FILE)
-	@echo "      - \"\$${POLLING_PORT}:\$${POLLING_PORT}\"" >> $(COMPOSE_DEV_FILE)
-	@echo "$(GREEN)✓ Development override file created$(NC)"
-
-.PHONY: backup
-backup: ## Backup data and configuration
-	@echo "$(BLUE)Creating backup...$(NC)"
-	@mkdir -p backups
-	@tar -czf backups/datafit-backup-$(shell date +%Y%m%d-%H%M%S).tar.gz \
-		--exclude=backups \
-		--exclude=.git \
-		--exclude=node_modules \
-		--exclude=__pycache__ \
-		.
-	@echo "$(GREEN)✓ Backup created in backups/$(NC)"
-
-# =============================================================================
-# ENVIRONMENT MANAGEMENT
-# =============================================================================
-
-.PHONY: switch-env
-switch-env: ## Switch to different environment (usage: make switch-env ENV=prod)
-	@echo "$(BLUE)Switching to environment: $(ENV)$(NC)"
-	@if [ ! -f config.$(ENV).env ]; then \
-		echo "$(RED)Error: config.$(ENV).env not found$(NC)"; \
-		exit 1; \
-	fi
-	@$(MAKE) ENV=$(ENV) validate-config
-	@echo "$(GREEN)✓ Switched to $(ENV) environment$(NC)"
-
-.PHONY: create-env
-create-env: ## Create new environment config (usage: make create-env ENV=staging)
-	@echo "$(BLUE)Creating $(ENV) environment config...$(NC)"
-	@if [ -f config.$(ENV).env ]; then \
-		echo "$(YELLOW)Warning: config.$(ENV).env already exists$(NC)"; \
-		read -p "Overwrite? (y/N): " confirm; \
-		if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
-			echo "$(YELLOW)Cancelled$(NC)"; \
-			exit 0; \
-		fi; \
-	fi
-	@cp config.dev.env config.$(ENV).env
-	@echo "$(GREEN)✓ Created config.$(ENV).env$(NC)"
-	@echo "$(YELLOW)Remember to update the configuration for $(ENV) environment$(NC)"
-
-# =============================================================================
-# DEFAULT TARGET
-# =============================================================================
-
+# Default target
 .DEFAULT_GOAL := help
 
-# Make all targets phony to avoid conflicts with files
-.PHONY: $(MAKECMDGOALS)
+# Colors for output
+RED = \033[0;31m
+GREEN = \033[0;32m
+YELLOW = \033[0;33m
+BLUE = \033[0;34m
+MAGENTA = \033[0;35m
+CYAN = \033[0;36m
+WHITE = \033[0;37m
+RESET = \033[0m
+
+# Python and pip executables
+PYTHON = python3
+PIP = pip3
+PYTEST = pytest
+TOX = tox
+
+# Directories
+SRC_DIR = src
+TEST_DIR = tests
+DOCS_DIR = docs
+COVERAGE_DIR = htmlcov
+REPORTS_DIR = reports
+
+# Create reports directory if it doesn't exist
+$(shell mkdir -p $(REPORTS_DIR))
+
+help: ## Show this help message
+	@echo "$(CYAN)DataFit Testing and Development Commands$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)Testing:$(RESET)"
+	@awk 'BEGIN {FS = ":.*##"; printf "  %-20s %s\n", "Target", "Description"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST) | grep -E "(test|coverage)"
+	@echo ""
+	@echo "$(YELLOW)Code Quality:$(RESET)"
+	@awk 'BEGIN {FS = ":.*##"; printf "  %-20s %s\n", "Target", "Description"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST) | grep -E "(lint|format|security)"
+	@echo ""
+	@echo "$(YELLOW)Development:$(RESET)"
+	@awk 'BEGIN {FS = ":.*##"; printf "  %-20s %s\n", "Target", "Description"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST) | grep -E "(install|setup|clean|docs)"
+	@echo ""
+
+# =============================================================================
+# Testing Targets
+# =============================================================================
+
+test: ## Run all tests
+	@echo "$(BLUE)Running all tests...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -v
+
+test-unit: ## Run unit tests only
+	@echo "$(BLUE)Running unit tests...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -m "unit and not slow" -v
+
+test-integration: ## Run integration tests only
+	@echo "$(BLUE)Running integration tests...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -m "integration" -v
+
+test-performance: ## Run performance tests only
+	@echo "$(BLUE)Running performance tests...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -m "performance" -v --benchmark-only
+
+test-slow: ## Run slow tests
+	@echo "$(BLUE)Running slow tests...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -m "slow" -v
+
+test-all: ## Run all tests including slow ones
+	@echo "$(BLUE)Running all tests including slow ones...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -v --runslow
+
+test-parallel: ## Run tests in parallel
+	@echo "$(BLUE)Running tests in parallel...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -n auto -v
+
+test-failed: ## Run only previously failed tests
+	@echo "$(BLUE)Running previously failed tests...$(RESET)"
+	$(PYTEST) --lf -v
+
+test-watch: ## Run tests in watch mode (requires pytest-watch)
+	@echo "$(BLUE)Running tests in watch mode...$(RESET)"
+	ptw $(TEST_DIR) -- -v
+
+# =============================================================================
+# Coverage Targets
+# =============================================================================
+
+coverage: ## Run tests with coverage
+	@echo "$(BLUE)Running tests with coverage...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --cov=$(SRC_DIR) --cov-report=term-missing --cov-report=html --cov-report=xml
+
+coverage-unit: ## Run unit tests with coverage
+	@echo "$(BLUE)Running unit tests with coverage...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -m "unit and not slow" --cov=$(SRC_DIR) --cov-report=term-missing
+
+coverage-html: ## Generate HTML coverage report
+	@echo "$(BLUE)Generating HTML coverage report...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --cov=$(SRC_DIR) --cov-report=html
+	@echo "$(GREEN)Coverage report generated in $(COVERAGE_DIR)/index.html$(RESET)"
+
+coverage-xml: ## Generate XML coverage report
+	@echo "$(BLUE)Generating XML coverage report...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --cov=$(SRC_DIR) --cov-report=xml
+
+coverage-json: ## Generate JSON coverage report
+	@echo "$(BLUE)Generating JSON coverage report...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --cov=$(SRC_DIR) --cov-report=json
+
+coverage-report: ## Show coverage report
+	@echo "$(BLUE)Showing coverage report...$(RESET)"
+	coverage report --show-missing
+
+coverage-erase: ## Erase coverage data
+	@echo "$(BLUE)Erasing coverage data...$(RESET)"
+	coverage erase
+
+# =============================================================================
+# Code Quality Targets
+# =============================================================================
+
+lint: ## Run all linting checks
+	@echo "$(BLUE)Running linting checks...$(RESET)"
+	@echo "$(YELLOW)Checking import sorting...$(RESET)"
+	isort --check-only --diff $(SRC_DIR) $(TEST_DIR)
+	@echo "$(YELLOW)Checking code formatting...$(RESET)"
+	black --check --diff $(SRC_DIR) $(TEST_DIR)
+	@echo "$(YELLOW)Running flake8...$(RESET)"
+	flake8 $(SRC_DIR) $(TEST_DIR)
+	@echo "$(YELLOW)Running mypy...$(RESET)"
+	mypy $(SRC_DIR) --ignore-missing-imports
+
+lint-fix: ## Fix linting issues automatically
+	@echo "$(BLUE)Fixing linting issues...$(RESET)"
+	isort $(SRC_DIR) $(TEST_DIR)
+	black $(SRC_DIR) $(TEST_DIR)
+
+format: ## Format code with black and isort
+	@echo "$(BLUE)Formatting code...$(RESET)"
+	isort $(SRC_DIR) $(TEST_DIR)
+	black $(SRC_DIR) $(TEST_DIR)
+
+format-check: ## Check code formatting without making changes
+	@echo "$(BLUE)Checking code formatting...$(RESET)"
+	isort --check-only $(SRC_DIR) $(TEST_DIR)
+	black --check $(SRC_DIR) $(TEST_DIR)
+
+type-check: ## Run type checking with mypy
+	@echo "$(BLUE)Running type checking...$(RESET)"
+	mypy $(SRC_DIR) --ignore-missing-imports
+
+# =============================================================================
+# Security Targets
+# =============================================================================
+
+security: ## Run security checks
+	@echo "$(BLUE)Running security checks...$(RESET)"
+	@echo "$(YELLOW)Checking for known vulnerabilities...$(RESET)"
+	safety check --json --output $(REPORTS_DIR)/safety-report.json || true
+	@echo "$(YELLOW)Running security linting...$(RESET)"
+	bandit -r $(SRC_DIR) -f json -o $(REPORTS_DIR)/bandit-report.json || true
+	@echo "$(YELLOW)Auditing packages...$(RESET)"
+	pip-audit --format=json --output=$(REPORTS_DIR)/pip-audit.json || true
+
+bandit: ## Run bandit security linting
+	@echo "$(BLUE)Running bandit security linting...$(RESET)"
+	bandit -r $(SRC_DIR) -f json -o $(REPORTS_DIR)/bandit-report.json
+
+safety: ## Check for known security vulnerabilities
+	@echo "$(BLUE)Checking for known security vulnerabilities...$(RESET)"
+	safety check --json --output $(REPORTS_DIR)/safety-report.json
+
+# =============================================================================
+# Development Environment Targets
+# =============================================================================
+
+install-dev: ## Install development dependencies
+	@echo "$(BLUE)Installing development dependencies...$(RESET)"
+	$(PIP) install -r requirements-test.txt
+	$(PIP) install -e .
+
+setup-env: ## Set up development environment
+	@echo "$(BLUE)Setting up development environment...$(RESET)"
+	$(PYTHON) -m venv venv
+	@echo "$(GREEN)Virtual environment created. Activate with: source venv/bin/activate$(RESET)"
+	@echo "$(YELLOW)Run 'make install-dev' after activating the virtual environment$(RESET)"
+
+check-requirements: ## Check if all requirements are installed
+	@echo "$(BLUE)Checking requirements...$(RESET)"
+	$(PIP) check
+
+update-deps: ## Update all dependencies
+	@echo "$(BLUE)Updating dependencies...$(RESET)"
+	$(PIP) install --upgrade pip
+	$(PIP) install --upgrade -r requirements-test.txt
+
+# =============================================================================
+# Tox Targets
+# =============================================================================
+
+tox: ## Run tox tests across all environments
+	@echo "$(BLUE)Running tox tests...$(RESET)"
+	$(TOX)
+
+tox-env: ## Run tox for specific environment (usage: make tox-env ENV=py311)
+	@echo "$(BLUE)Running tox for $(ENV)...$(RESET)"
+	$(TOX) -e $(ENV)
+
+tox-parallel: ## Run tox tests in parallel
+	@echo "$(BLUE)Running tox tests in parallel...$(RESET)"
+	$(TOX) --parallel auto
+
+# =============================================================================
+# Documentation Targets
+# =============================================================================
+
+docs: ## Build documentation
+	@echo "$(BLUE)Building documentation...$(RESET)"
+	cd $(DOCS_DIR) && make html
+	@echo "$(GREEN)Documentation built in $(DOCS_DIR)/_build/html/$(RESET)"
+
+docs-serve: ## Serve documentation locally
+	@echo "$(BLUE)Serving documentation...$(RESET)"
+	cd $(DOCS_DIR)/_build/html && $(PYTHON) -m http.server 8080
+
+docs-clean: ## Clean documentation build
+	@echo "$(BLUE)Cleaning documentation build...$(RESET)"
+	cd $(DOCS_DIR) && make clean
+
+# =============================================================================
+# Performance and Profiling Targets
+# =============================================================================
+
+benchmark: ## Run performance benchmarks
+	@echo "$(BLUE)Running performance benchmarks...$(RESET)"
+	$(PYTEST) $(TEST_DIR) -m "performance" --benchmark-only --benchmark-sort=mean --benchmark-json=$(REPORTS_DIR)/benchmark.json
+
+profile: ## Profile test execution
+	@echo "$(BLUE)Profiling test execution...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --profile --profile-svg
+
+memory-profile: ## Run memory profiling
+	@echo "$(BLUE)Running memory profiling...$(RESET)"
+	mprof run $(PYTEST) $(TEST_DIR) -m "unit"
+	mprof plot --output $(REPORTS_DIR)/memory_profile.png
+
+# =============================================================================
+# Reporting Targets
+# =============================================================================
+
+test-report: ## Generate comprehensive test report
+	@echo "$(BLUE)Generating comprehensive test report...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --html=$(REPORTS_DIR)/pytest-report.html --self-contained-html --json-report --json-report-file=$(REPORTS_DIR)/pytest-report.json
+
+ci-test: ## Run tests for CI environment
+	@echo "$(BLUE)Running CI tests...$(RESET)"
+	$(PYTEST) $(TEST_DIR) --cov=$(SRC_DIR) --cov-report=xml --cov-report=term --junit-xml=$(REPORTS_DIR)/junit.xml
+
+quality-report: ## Generate code quality report
+	@echo "$(BLUE)Generating code quality report...$(RESET)"
+	@make lint > $(REPORTS_DIR)/lint-report.txt 2>&1 || true
+	@make security
+	@echo "$(GREEN)Quality reports generated in $(REPORTS_DIR)/$(RESET)"
+
+# =============================================================================
+# Cleanup Targets
+# =============================================================================
+
+clean: ## Clean up generated files and directories
+	@echo "$(BLUE)Cleaning up...$(RESET)"
+	rm -rf $(COVERAGE_DIR)
+	rm -rf .pytest_cache
+	rm -rf .tox
+	rm -rf .coverage*
+	rm -rf coverage.xml
+	rm -rf coverage.json
+	rm -rf .mypy_cache
+	rm -rf $(REPORTS_DIR)
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.pyo" -delete
+
+clean-all: clean ## Clean everything including documentation
+	@echo "$(BLUE)Cleaning everything...$(RESET)"
+	cd $(DOCS_DIR) && make clean 2>/dev/null || true
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info
+
+# =============================================================================
+# Utility Targets
+# =============================================================================
+
+list-tests: ## List all tests
+	@echo "$(BLUE)Listing all tests...$(RESET)"
+	$(PYTEST) --collect-only -q
+
+list-markers: ## List all test markers
+	@echo "$(BLUE)Listing all test markers...$(RESET)"
+	$(PYTEST) --markers
+
+count-tests: ## Count total number of tests
+	@echo "$(BLUE)Counting tests...$(RESET)"
+	@echo "Total tests: $$($(PYTEST) --collect-only -q | grep -c '<Module')"
+	@echo "Unit tests: $$($(PYTEST) --collect-only -q -m 'unit' | grep -c '<Module')"
+	@echo "Integration tests: $$($(PYTEST) --collect-only -q -m 'integration' | grep -c '<Module')"
+
+validate-phase5a: ## Validate Phase 5A test completion
+	@echo "$(BLUE)Validating Phase 5A test completion...$(RESET)"
+	@echo "$(YELLOW)Checking test file structure...$(RESET)"
+	@test -d tests/test_job_submission && echo "✓ Job submission tests directory exists" || echo "✗ Missing job submission tests"
+	@test -d tests/test_job_polling && echo "✓ Job polling tests directory exists" || echo "✗ Missing job polling tests"
+	@test -d tests/test_reports && echo "✓ Report tests directory exists" || echo "✗ Missing report tests"
+	@test -d tests/test_infrastructure && echo "✓ Infrastructure tests directory exists" || echo "✗ Missing infrastructure tests"
+	@test -d tests/test_mocks && echo "✓ Mock tests directory exists" || echo "✗ Missing mock tests"
+	@test -d tests/test_fixtures && echo "✓ Fixture tests directory exists" || echo "✗ Missing fixture tests"
+	@echo "$(YELLOW)Running test validation...$(RESET)"
+	@$(PYTEST) $(TEST_DIR) --collect-only | grep -c "collected" || echo "0 tests collected"
+
+# =============================================================================
+# Quick Shortcuts
+# =============================================================================
+
+quick-test: test-unit ## Quick unit test run
+unit: test-unit ## Alias for test-unit
+integration: test-integration ## Alias for test-integration
+perf: test-performance ## Alias for test-performance
+cov: coverage ## Alias for coverage
+
+# =============================================================================
+# Help and Information
+# =============================================================================
+
+status: ## Show project testing status
+	@echo "$(CYAN)DataFit Testing Status$(RESET)"
+	@echo "$(YELLOW)Test Files:$(RESET)"
+	@find $(TEST_DIR) -name "test_*.py" | wc -l | xargs echo "  Test files:"
+	@echo "$(YELLOW)Coverage:$(RESET)"
+	@if [ -f .coverage ]; then \
+		coverage report --show-missing | tail -1; \
+	else \
+		echo "  No coverage data available. Run 'make coverage' first."; \
+	fi
+	@echo "$(YELLOW)Last Test Run:$(RESET)"
+	@if [ -f .pytest_cache/v/cache/lastfailed ]; then \
+		echo "  Some tests failed in last run"; \
+	else \
+		echo "  All tests passed in last run"; \
+	fi
+
+info: ## Show environment information
+	@echo "$(CYAN)Environment Information$(RESET)"
+	@echo "Python version: $$($(PYTHON) --version)"
+	@echo "Pip version: $$($(PIP) --version)"
+	@echo "Pytest version: $$($(PYTEST) --version)"
+	@echo "Working directory: $$(pwd)"
+	@echo "Virtual environment: $$(echo $$VIRTUAL_ENV)"

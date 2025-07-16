@@ -1,0 +1,97 @@
+# Core testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.1  # Parallel test execution
+pytest-mock>=3.11.1  # Enhanced mocking
+pytest-timeout>=2.1.0  # Test timeouts
+pytest-html>=3.2.0  # HTML test reports
+pytest-json-report>=1.5.0  # JSON test reports
+
+# Assertions and test utilities
+assertpy>=1.1  # Fluent assertions
+parameterized>=0.9.0  # Parameterized tests
+freezegun>=1.2.2  # Time mocking
+responses>=0.23.3  # HTTP request mocking
+factory-boy>=3.3.0  # Test data factories
+
+# Performance and benchmarking
+pytest-benchmark>=4.0.0  # Performance benchmarks
+memory-profiler>=0.60.0  # Memory profiling
+psutil>=5.9.5  # System monitoring
+
+# Database testing
+pytest-postgresql>=5.0.0  # PostgreSQL testing
+pytest-redis>=3.0.2  # Redis testing
+sqlalchemy-utils>=0.41.1  # Database utilities
+
+# Security testing
+bandit>=1.7.5  # Security linting
+safety>=2.3.5  # Dependency vulnerability checking
+
+# Code quality and linting
+flake8>=6.0.0  # Code linting
+black>=23.7.0  # Code formatting
+isort>=5.12.0  # Import sorting
+mypy>=1.5.1  # Type checking
+pre-commit>=3.3.3  # Git hooks
+
+# Documentation testing
+sphinx>=7.1.2  # Documentation
+sphinx-rtd-theme>=1.3.0  # Documentation theme
+
+# Web/API testing
+requests>=2.31.0  # HTTP client
+selenium>=4.11.2  # Web browser automation
+httpx>=0.24.1  # Async HTTP client
+
+# Data testing
+pandas>=2.0.3  # Data analysis
+numpy>=1.24.3  # Numerical computing
+jsonschema>=4.19.0  # JSON validation
+
+# Financial libraries for domain testing
+scipy>=1.11.1  # Scientific computing
+scikit-learn>=1.3.0  # Machine learning
+plotly>=5.15.0  # Data visualization
+
+# Async testing
+pytest-asyncio>=0.21.1  # Async test support
+aiohttp>=3.8.5  # Async HTTP
+
+# Configuration and environment
+python-dotenv>=1.0.0  # Environment variables
+pydantic>=2.1.1  # Data validation
+PyYAML>=6.0.1  # YAML parsing
+
+# Logging and monitoring
+structlog>=23.1.0  # Structured logging
+prometheus-client>=0.17.1  # Metrics
+
+# JWT and security for testing
+PyJWT>=2.8.0  # JWT tokens
+cryptography>=41.0.3  # Cryptographic functions
+
+# Development utilities
+ipdb>=0.13.13  # Enhanced debugger
+rich>=13.5.2  # Pretty printing
+click>=8.1.6  # CLI utilities
+
+# Test data generation
+Faker>=19.3.0  # Fake data generation
+mimesis>=11.1.0  # Alternative fake data
+
+# Network testing
+requests-mock>=1.11.0  # HTTP request mocking
+wiremock>=2.6.0  # API mocking server
+
+# File format testing
+openpyxl>=3.1.2  # Excel files
+PyPDF2>=3.0.1  # PDF files
+xmltodict>=0.13.0  # XML parsing
+
+# Containerization for testing
+testcontainers>=3.7.1  # Docker containers for testing
+
+# Reporting and analysis
+coverage[toml]>=7.2.7  # Coverage reporting
+pytest-clarity>=1.0.1  # Better test output
