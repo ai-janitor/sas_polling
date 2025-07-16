@@ -121,6 +121,7 @@ test-reports: health ## Test all report types
 	@$(MAKE) --no-print-directory _test-trading-report
 	@$(MAKE) --no-print-directory _test-aml-report
 	@$(MAKE) --no-print-directory _test-focus-report
+	@$(MAKE) --no-print-directory _test-portfolio-pdf-report
 	@echo "$(GREEN)All report tests completed$(NC)"
 
 test-performance: health ## Run performance tests
@@ -230,6 +231,10 @@ _test-aml-report:
 _test-focus-report:
 	@echo "  Testing FOCUS Manual report..."
 	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/focus-test.json)
+
+_test-portfolio-pdf-report:
+	@echo "  Testing Portfolio Analytics PDF report..."
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/portfolio-pdf-test.json)
 
 _test-response-times:
 	@echo "  Testing response times..."

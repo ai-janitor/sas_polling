@@ -1,0 +1,11 @@
+metric,value,description
+volatility,12.5,Annualized volatility percentage
+sharpe_ratio,1.8,Risk-adjusted return measure
+max_drawdown,-3.2,Maximum peak-to-trough decline percentage
+var_95,-2.1,Value at Risk at 95% confidence level
+beta,0.95,Sensitivity to market movements
+alpha,2.3,Excess return over benchmark
+tracking_error,4.1,Standard deviation of excess returns
+information_ratio,0.85,Alpha divided by tracking error
+sortino_ratio,2.1,Downside risk-adjusted return
+calmar_ratio,0.75,Annual return divided by max drawdown

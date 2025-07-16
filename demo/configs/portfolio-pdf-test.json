@@ -1,0 +1,13 @@
+{
+  "name": "Test Portfolio Analytics PDF Report",
+  "jobDefinitionUri": "portfolio-analytics-pdf",
+  "arguments": {
+    "report_date": "2024-12-15",
+    "portfolio_type": "Mixed",
+    "chart_type": "Performance",
+    "include_benchmarks": true,
+    "username": "cli_demo_user"
+  },
+  "submitted_by": "cli_demo_user",
+  "priority": 5
+}

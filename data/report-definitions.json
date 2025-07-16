@@ -430,6 +430,70 @@
           ]
         }
       ]
+    },
+    {
+      "id": "analytics-charts",
+      "name": "Analytics & Visualization",
+      "description": "Data analytics with charts and visualizations",
+      "subcategories": [
+        {
+          "id": "chart-reports",
+          "name": "Chart Reports",
+          "description": "Static reports with embedded charts and visualizations",
+          "reports": [
+            {
+              "id": "portfolio-analytics-pdf",
+              "name": "Portfolio Analytics PDF Report",
+              "description": "Static PDF report with portfolio performance charts and analytics",
+              "estimated_duration": 45,
+              "output_formats": ["pdf"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "report_date",
+                    "type": "date",
+                    "label": "Report Date",
+                    "required": true,
+                    "description": "Date for portfolio analysis"
+                  },
+                  {
+                    "name": "portfolio_type",
+                    "type": "dropdown",
+                    "label": "Portfolio Type",
+                    "required": false,
+                    "options": ["All", "Equity", "Fixed Income", "Mixed", "Alternative"],
+                    "default": "All",
+                    "description": "Type of portfolio to analyze"
+                  },
+                  {
+                    "name": "chart_type",
+                    "type": "dropdown",
+                    "label": "Chart Type",
+                    "required": false,
+                    "options": ["Performance", "Risk Analysis", "Asset Allocation", "Sector Breakdown"],
+                    "default": "Performance",
+                    "description": "Primary chart focus for the report"
+                  },
+                  {
+                    "name": "include_benchmarks",
+                    "type": "checkbox",
+                    "label": "Include Benchmark Comparison",
+                    "required": false,
+                    "default": true,
+                    "description": "Include benchmark performance comparison charts"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
