@@ -2,6 +2,11 @@
 # DATAFIT PROJECT .GITIGNORE
 # =============================================================================
 
+# Agency-specific customizations (optional approach)
+docker-compose.override.yml
+config.local.env
+*.dockerfile.local
+
 # Python
 __pycache__/
 *.py[cod]

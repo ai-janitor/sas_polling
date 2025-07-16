@@ -1,0 +1,8 @@
+# Docker files - merge strategy to favor local changes
+**/Dockerfile merge=ours
+docker-compose.yml merge=ours
+config.dev.env merge=ours
+
+# Alternative: mark as binary to prevent automatic merging
+# **/Dockerfile binary
+# docker-compose.yml binary
