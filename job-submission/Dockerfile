@@ -24,7 +24,10 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+# Create virtual environment to avoid conflicts with system packages
+RUN python3 -m venv /app/venv && \
+    source /app/venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -32,7 +35,8 @@ COPY . .
 # Create necessary directories and set permissions
 RUN mkdir -p /var/log/datafit /tmp/datafit && \
     chown -R appuser:appgroup /app /var/log/datafit /tmp/datafit && \
-    chmod -R 755 /app
+    chmod -R 755 /app && \
+    chmod +x /app/venv/bin/python
 
 # Switch to non-root user
 USER appuser
@@ -45,8 +49,8 @@ EXPOSE ${SUBMISSION_PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Production command using vanilla Python 3.9 http.server
-CMD ["python3", "app.py"]
+# Production command using virtual environment
+CMD ["/app/venv/bin/python", "app.py"]
 
 # =============================================================================
 # ENVIRONMENT VARIABLES:
