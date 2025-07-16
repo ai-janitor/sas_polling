@@ -57,16 +57,20 @@ class FormGenerator {
     }
 
     generateForm(report) {
-        if (!report || !report.prompts) {
+        if (!report || !report.schema || !report.schema.fields) {
             console.error('Invalid report schema:', report);
             return;
         }
+
+        console.log('DEBUG: Generating form for report:', report);
+        console.log('DEBUG: Schema fields:', report.schema.fields);
 
         this.currentSchema = report;
         this.formData = {};
         this.validationErrors = {};
         
-        const fieldsHtml = this.generateFields(report.prompts);
+        const fieldsHtml = this.generateFields(report.schema.fields);
+        // console.log('DEBUG: Generated fields HTML:', fieldsHtml);
         this.formContainer.innerHTML = fieldsHtml;
         
         this.setupFieldEventListeners();
@@ -82,7 +86,7 @@ class FormGenerator {
                        name="job_name" 
                        class="form-input" 
                        placeholder="Enter a name for this job"
-                       value="${this.currentSchema.name} - ${new Date().toLocaleString()}">
+                       value="${this.currentSchema.name} - ${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}">
                 <div class="form-help">Provide a descriptive name for this job</div>
             </div>
         `;
@@ -90,15 +94,18 @@ class FormGenerator {
         this.formContainer.insertAdjacentHTML('afterbegin', jobNameHtml);
     }
 
-    generateFields(prompts) {
-        return prompts.map(promptGroup => {
-            return Object.entries(promptGroup).map(([fieldName, config]) => {
-                if (config.hide || !config.active) {
-                    return '';
-                }
-                
-                return this.generateField(fieldName, config);
-            }).join('');
+    generateFields(fields) {
+        console.log('DEBUG: generateFields called with:', fields);
+        return fields.map((field, index) => {
+            console.log(`DEBUG: Processing field ${index}:`, field);
+            if (field.hide === true || field.active === false) {
+                console.log(`DEBUG: Skipping field ${field.name} - hide:${field.hide} active:${field.active}`);
+                return '';
+            }
+            
+            const fieldHtml = this.generateField(field.name, field);
+            // console.log(`DEBUG: Generated HTML for ${field.name}:`, fieldHtml);
+            return fieldHtml;
         }).join('');
     }
 
@@ -109,8 +116,9 @@ class FormGenerator {
         
         let inputHtml = '';
         
-        switch (config.inputType) {
+        switch (config.type) {
             case 'inputtext':
+            case 'text':
                 inputHtml = this.generateTextInput(fieldId, fieldName, config);
                 break;
             case 'dropdown':
@@ -150,16 +158,28 @@ class FormGenerator {
         const value = this.formData[fieldName] || config.defaultValue || '';
         const validation = config.validation || {};
         
+        // Auto-detect number inputs based on pattern or field name
+        const isNumberField = config.pattern && /^\^?\[0-9\]/.test(config.pattern) || 
+                             fieldName.includes('threshold') || 
+                             fieldName.includes('amount') || 
+                             fieldName.includes('rate') ||
+                             fieldName.includes('percent');
+        
+        const inputType = isNumberField ? 'number' : 'text';
+        
         return `
-            <input type="text" 
+            <input type="${inputType}" 
                    id="${fieldId}" 
                    name="${fieldName}" 
                    class="form-input" 
                    value="${this.escapeHtml(value)}"
                    ${config.required ? 'required' : ''}
-                   ${validation.pattern ? `pattern="${validation.pattern}"` : ''}
-                   ${validation.minLength ? `minlength="${validation.minLength}"` : ''}
-                   ${validation.maxLength ? `maxlength="${validation.maxLength}"` : ''}
+                   ${!isNumberField && validation.pattern ? `pattern="${validation.pattern}"` : ''}
+                   ${isNumberField && validation.min ? `min="${validation.min}"` : ''}
+                   ${isNumberField && validation.max ? `max="${validation.max}"` : ''}
+                   ${isNumberField && validation.step ? `step="${validation.step}"` : ''}
+                   ${!isNumberField && validation.minLength ? `minlength="${validation.minLength}"` : ''}
+                   ${!isNumberField && validation.maxLength ? `maxlength="${validation.maxLength}"` : ''}
                    ${config.placeholder ? `placeholder="${this.escapeHtml(config.placeholder)}"` : ''}
                    aria-describedby="${fieldId}_error">
         `;
@@ -258,7 +278,13 @@ class FormGenerator {
     }
 
     generateHiddenInput(fieldName, config) {
-        const value = this.formData[fieldName] || config.defaultValue || config.value || '';
+        let value = this.formData[fieldName] || config.defaultValue || config.value || '';
+        
+        // For username field, provide a default value in development
+        if (fieldName === 'username' && !value) {
+            value = 'dev-user';
+        }
+        
         return `
             <input type="hidden" 
                    name="${fieldName}" 
@@ -415,10 +441,28 @@ class FormGenerator {
     getFormData() {
         const data = { ...this.formData };
         
+        // Collect job name
         const jobNameInput = document.getElementById('job_name');
         if (jobNameInput) {
             data.job_name = jobNameInput.value;
         }
+
+        // Collect all form inputs including hidden fields
+        const allInputs = this.formContainer.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+            const fieldName = input.name;
+            if (fieldName && !data.hasOwnProperty(fieldName)) {
+                if (input.type === 'checkbox') {
+                    data[fieldName] = input.checked;
+                } else if (input.type === 'radio') {
+                    if (input.checked) {
+                        data[fieldName] = input.value;
+                    }
+                } else {
+                    data[fieldName] = input.value;
+                }
+            }
+        });
 
         return data;
     }

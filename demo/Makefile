@@ -35,9 +35,9 @@ CONFIGS_DIR := $(DEMO_DIR)/configs
 OUTPUTS_DIR := $(DEMO_DIR)/outputs
 TEMP_DIR := $(OUTPUTS_DIR)/temp
 
-# Service URLs from config
-SUBMISSION_URL := http://localhost:$(SUBMISSION_PORT)
-POLLING_URL := http://localhost:$(POLLING_PORT)
+# Service URLs from config (using external ports for CLI access)
+SUBMISSION_URL := http://localhost:$(SUBMISSION_EXTERNAL_PORT)
+POLLING_URL := http://localhost:$(POLLING_EXTERNAL_PORT)
 
 # Demo settings
 DEMO_USER := cli_demo_user
@@ -52,7 +52,7 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m # No Color
 
-.PHONY: help demo health test-all test-basic test-errors test-performance test-reports clean logs setup
+.PHONY: help demo health test-all test-basic test-errors test-performance test-reports clean logs setup step1 step2 step3 step4
 
 # Default target
 all: help
@@ -62,6 +62,12 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(GREEN)Available targets:$(NC)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(GREEN)Demo Steps (Quick Start):$(NC)"
+	@echo "  $(YELLOW)step1$(NC)           Submit single CMBS job with validation"
+	@echo "  $(YELLOW)step2$(NC)           Submit multiple jobs (RMBS, VaR, Trading)"
+	@echo "  $(YELLOW)step3$(NC)           Demonstrate error handling scenarios"
+	@echo "  $(YELLOW)step4$(NC)           Complete workflow: submit → monitor → download files"
 	@echo ""
 	@echo "$(GREEN)Configuration:$(NC)"
 	@echo "  Submission Service: $(SUBMISSION_URL)"
@@ -199,31 +205,31 @@ _test-malformed-requests:
 
 _test-cmbs-report:
 	@echo "  Testing CMBS report..."
-	@$(call submit_and_wait_job,cmbs-user-manual,'{"start_date":"2024-01-01","end_date":"2024-12-31","property_type":"Office","include_charts":true,"username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/cmbs-test.json)
 
 _test-rmbs-report:
 	@echo "  Testing RMBS report..."
-	@$(call submit_and_wait_job,rmbs-performance,'{"report_date":"2024-12-01","loan_type":"Prime","performance_metrics":"Enhanced","username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/rmbs-test.json)
 
 _test-var-report:
 	@echo "  Testing VaR report..."
-	@$(call submit_and_wait_job,var-daily,'{"calculation_date":"2024-12-15","confidence_level":"99%","username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/var-test.json)
 
 _test-stress-report:
 	@echo "  Testing Stress Testing report..."
-	@$(call submit_and_wait_job,stress-testing,'{"test_date":"2024-12-15","scenario_type":"Baseline","test_horizon":"2 Years","username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/stress-test.json)
 
 _test-trading-report:
 	@echo "  Testing Trading Activity report..."
-	@$(call submit_and_wait_job,trading-activity,'{"trade_date":"2024-12-15","asset_class":"Bonds","username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/trading-test.json)
 
 _test-aml-report:
 	@echo "  Testing AML Alerts report..."
-	@$(call submit_and_wait_job,aml-alerts,'{"alert_date":"2024-12-15","alert_type":"Suspicious Activity","username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/aml-test.json)
 
 _test-focus-report:
 	@echo "  Testing FOCUS Manual report..."
-	@$(call submit_and_wait_job,focus-manual,'{"reporting_date":"2024-12-01","report_type":"Monthly","entity_type":"Broker-Dealer","username":"$(DEMO_USER)"}')
+	@$(call submit_and_wait_job_from_file,$(CONFIGS_DIR)/focus-test.json)
 
 _test-response-times:
 	@echo "  Testing response times..."
@@ -291,10 +297,10 @@ _demo-workflow:
 	fi
 
 # Function to submit job and wait for completion
-define submit_and_wait_job
+define submit_and_wait_job_from_file
 	JOB_ID=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
 		-H "Content-Type: application/json" \
-		-d '{"name":"Test $(1) Report","jobDefinitionUri":"$(1)","arguments":$(2),"submitted_by":"$(DEMO_USER)","priority":5}' \
+		-d @$(1) \
 		| jq -r '.id'); \
 	echo "    Job ID: $$JOB_ID"; \
 	for i in {1..5}; do \
@@ -330,3 +336,271 @@ report: ## Generate demo execution report
 	@find $(OUTPUTS_DIR) -name "*.html" -o -name "*.json" -o -name "*.txt" | \
 		while read file; do echo "- $$file"; done >> $(OUTPUTS_DIR)/demo-report.md
 	@echo "$(GREEN)Demo report generated: $(OUTPUTS_DIR)/demo-report.md$(NC)"
+
+# =============================================================================
+# DEMO STEP TARGETS - Based on Frontend Success Patterns
+# =============================================================================
+
+step1: health ## Demo Step 1: Submit single CMBS job with validation
+	@echo "$(BLUE)Demo Step 1: Single Job Submission$(NC)"
+	@echo "$(YELLOW)Submitting CMBS User Manual report job...$(NC)"
+	@echo ""
+	@echo "1. Job Submission Request:"
+	@JOB_RESPONSE=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Demo-CMBS-Report", \
+			"jobDefinitionUri": "cmbs-user-manual", \
+			"arguments": { \
+				"start_date": "2025-01-01", \
+				"end_date": "2025-07-16", \
+				"property_type": "All", \
+				"include_charts": true, \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 5 \
+		}'); \
+	echo "$$JOB_RESPONSE" | jq '.'; \
+	JOB_ID=$$(echo "$$JOB_RESPONSE" | jq -r '.id'); \
+	echo ""; \
+	if [ "$$JOB_ID" != "null" ] && [ "$$JOB_ID" != "" ]; then \
+		echo "$(GREEN)✓ Job submitted successfully with ID: $$JOB_ID$(NC)"; \
+		echo "$$JOB_ID" > $(OUTPUTS_DIR)/step1-job-id.txt; \
+		echo ""; \
+		echo "2. Checking job status:"; \
+		STATUS_RESPONSE=$$(curl -s $(POLLING_URL)/api/jobs/$$JOB_ID/status); \
+		echo "$$STATUS_RESPONSE" | jq '.'; \
+		echo ""; \
+		echo "$(GREEN)Step 1 completed successfully!$(NC)"; \
+	else \
+		echo "$(RED)✗ Job submission failed$(NC)"; \
+		exit 1; \
+	fi
+
+step2: health ## Demo Step 2: Submit multiple jobs with different report types  
+	@echo "$(BLUE)Demo Step 2: Multiple Job Submissions$(NC)"
+	@echo "$(YELLOW)Submitting multiple report jobs...$(NC)"
+	@echo ""
+	@rm -f $(OUTPUTS_DIR)/step2-job-ids.txt
+	@echo "1. Submitting RMBS Performance Report:"
+	@JOB_ID1=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Demo-RMBS-Report", \
+			"jobDefinitionUri": "rmbs-performance", \
+			"arguments": { \
+				"report_date": "2024-12-01", \
+				"pool_id": "DEMO-POOL-001", \
+				"loan_type": "Prime", \
+				"performance_metrics": "Enhanced", \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 3 \
+		}' | jq -r '.id'); \
+	echo "   Job ID: $$JOB_ID1"; \
+	echo "$$JOB_ID1" >> $(OUTPUTS_DIR)/step2-job-ids.txt; \
+	echo ""; \
+	echo "2. Submitting VaR Daily Report:"; \
+	JOB_ID2=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Demo-VaR-Report", \
+			"jobDefinitionUri": "var-daily", \
+			"arguments": { \
+				"calculation_date": "2025-07-16", \
+				"confidence_level": "99%", \
+				"portfolio": "MAIN_PORTFOLIO", \
+				"include_stress": true, \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 1 \
+		}' | jq -r '.id'); \
+	echo "   Job ID: $$JOB_ID2"; \
+	echo "$$JOB_ID2" >> $(OUTPUTS_DIR)/step2-job-ids.txt; \
+	echo ""; \
+	echo "3. Submitting Trading Activity Report:"; \
+	JOB_ID3=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Demo-Trading-Report", \
+			"jobDefinitionUri": "trading-activity", \
+			"arguments": { \
+				"trade_date": "2025-07-16", \
+				"asset_class": "Bonds", \
+				"trader_id": "DEMO_TRADER_001", \
+				"include_pnl": true, \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 4 \
+		}' | jq -r '.id'); \
+	echo "   Job ID: $$JOB_ID3"; \
+	echo "$$JOB_ID3" >> $(OUTPUTS_DIR)/step2-job-ids.txt; \
+	echo ""; \
+	echo "4. Monitoring all job statuses:"; \
+	cat $(OUTPUTS_DIR)/step2-job-ids.txt | while read job_id; do \
+		if [ -n "$$job_id" ]; then \
+			echo "   Checking job $$job_id:"; \
+			curl -s $(POLLING_URL)/api/jobs/$$job_id/status | jq -c '{id: .id, status: .status, progress: .progress}'; \
+		fi; \
+	done; \
+	echo ""; \
+	echo "$(GREEN)Step 2 completed! Submitted $$(wc -l < $(OUTPUTS_DIR)/step2-job-ids.txt) jobs$(NC)"
+
+step3: health ## Demo Step 3: Error handling and edge cases
+	@echo "$(BLUE)Demo Step 3: Error Handling & Edge Cases$(NC)"
+	@echo "$(YELLOW)Testing various error scenarios...$(NC)"
+	@echo ""
+	@echo "1. Testing invalid job name (with forbidden characters):"
+	@RESPONSE1=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Invalid Job: Name, With: Forbidden! Characters", \
+			"jobDefinitionUri": "cmbs-user-manual", \
+			"arguments": { \
+				"start_date": "2025-01-01", \
+				"end_date": "2025-07-16", \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 5 \
+		}'); \
+	echo "$$RESPONSE1" | jq '.'; \
+	echo ""; \
+	echo "2. Testing missing required field (username):"; \
+	RESPONSE2=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Missing-Username-Test", \
+			"jobDefinitionUri": "cmbs-user-manual", \
+			"arguments": { \
+				"start_date": "2025-01-01", \
+				"end_date": "2025-07-16", \
+				"property_type": "All" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 5 \
+		}'); \
+	echo "$$RESPONSE2" | jq '.'; \
+	echo ""; \
+	echo "3. Testing non-existent report ID:"; \
+	RESPONSE3=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Invalid-Report-Test", \
+			"jobDefinitionUri": "non-existent-report", \
+			"arguments": { \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 5 \
+		}'); \
+	echo "$$RESPONSE3" | jq '.'; \
+	echo ""; \
+	echo "4. Testing malformed JSON:"; \
+	RESPONSE4=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{"invalid": json, syntax}'); \
+	echo "$$RESPONSE4" | jq '.'; \
+	echo ""; \
+	echo "5. Testing valid job to confirm system still works:"; \
+	RESPONSE5=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Recovery-Test-Job", \
+			"jobDefinitionUri": "var-daily", \
+			"arguments": { \
+				"calculation_date": "2025-07-16", \
+				"confidence_level": "95%", \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 5 \
+		}'); \
+	echo "$$RESPONSE5" | jq '.'; \
+	RECOVERY_JOB_ID=$$(echo "$$RESPONSE5" | jq -r '.id'); \
+	if [ "$$RECOVERY_JOB_ID" != "null" ] && [ "$$RECOVERY_JOB_ID" != "" ]; then \
+		echo ""; \
+		echo "$(GREEN)✓ System recovery confirmed - valid job submitted: $$RECOVERY_JOB_ID$(NC)"; \
+	else \
+		echo ""; \
+		echo "$(RED)✗ System recovery failed$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(GREEN)Step 3 completed! Error handling demonstrated$(NC)"
+
+step4: health ## Demo Step 4: Complete workflow with file download
+	@echo "$(BLUE)Demo Step 4: Complete Workflow - Submit → Monitor → Download$(NC)"
+	@echo "$(YELLOW)Demonstrating full job lifecycle...$(NC)"
+	@echo ""
+	@echo "1. Submitting VaR Daily report (quick job):"
+	@JOB_RESPONSE=$$(curl -s -X POST $(SUBMISSION_URL)/api/jobs \
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"name": "Demo-Complete-Workflow", \
+			"jobDefinitionUri": "var-daily", \
+			"arguments": { \
+				"calculation_date": "2025-07-16", \
+				"confidence_level": "95%", \
+				"username": "$(DEMO_USER)" \
+			}, \
+			"submitted_by": "$(DEMO_USER)", \
+			"priority": 5 \
+		}'); \
+	echo "$$JOB_RESPONSE" | jq '.'; \
+	JOB_ID=$$(echo "$$JOB_RESPONSE" | jq -r '.id'); \
+	echo ""; \
+	if [ "$$JOB_ID" != "null" ] && [ "$$JOB_ID" != "" ]; then \
+		echo "$(GREEN)✓ Job submitted with ID: $$JOB_ID$(NC)"; \
+		echo "$$JOB_ID" > $(OUTPUTS_DIR)/step4-job-id.txt; \
+		echo ""; \
+		echo "2. Monitoring job progress (polling every 3 seconds):"; \
+		for i in {1..10}; do \
+			STATUS_RESPONSE=$$(curl -s $(POLLING_URL)/api/jobs/$$JOB_ID/status); \
+			STATUS=$$(echo "$$STATUS_RESPONSE" | jq -r '.status'); \
+			PROGRESS=$$(echo "$$STATUS_RESPONSE" | jq -r '.progress'); \
+			echo "   Poll $$i: Status=$$STATUS, Progress=$$PROGRESS%"; \
+			if [ "$$STATUS" = "completed" ]; then \
+				echo "   $(GREEN)✓ Job completed successfully!$(NC)"; \
+				break; \
+			elif [ "$$STATUS" = "failed" ]; then \
+				echo "   $(RED)✗ Job failed$(NC)"; \
+				break; \
+			fi; \
+			sleep 3; \
+		done; \
+		echo ""; \
+		if [ "$$STATUS" = "completed" ]; then \
+			echo "3. Listing available files:"; \
+			FILES_RESPONSE=$$(curl -s $(POLLING_URL)/api/jobs/$$JOB_ID/files); \
+			echo "$$FILES_RESPONSE" | jq '.'; \
+			echo ""; \
+			echo "4. Downloading files:"; \
+			echo "$$FILES_RESPONSE" | jq -r '.files[]?.filename' | while read filename; do \
+				if [ -n "$$filename" ]; then \
+					echo "   Downloading: $$filename"; \
+					curl -s $(POLLING_URL)/api/jobs/$$JOB_ID/files/$$filename -o $(OUTPUTS_DIR)/$$filename; \
+					echo "   $(GREEN)✓ Saved to: $(OUTPUTS_DIR)/$$filename$(NC)"; \
+				fi; \
+			done; \
+			echo ""; \
+			echo "5. Download URLs for reference:"; \
+			echo "$$FILES_RESPONSE" | jq -r '.files[]?.filename' | while read filename; do \
+				if [ -n "$$filename" ]; then \
+					echo "   $(POLLING_URL)/api/jobs/$$JOB_ID/files/$$filename"; \
+				fi; \
+			done; \
+		else \
+			echo "3. Job did not complete within polling window (Status: $$STATUS)"; \
+			echo "   You can check status later with:"; \
+			echo "   curl $(POLLING_URL)/api/jobs/$$JOB_ID/status"; \
+		fi; \
+	else \
+		echo "$(RED)✗ Job submission failed$(NC)"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "$(GREEN)Step 4 completed! Full workflow demonstrated$(NC)"

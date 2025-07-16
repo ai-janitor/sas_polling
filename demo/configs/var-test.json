@@ -1,0 +1,11 @@
+{
+  "name": "Test VaR Report",
+  "jobDefinitionUri": "var-daily",
+  "arguments": {
+    "calculation_date": "2024-12-15",
+    "confidence_level": "99%",
+    "username": "cli_demo_user"
+  },
+  "submitted_by": "cli_demo_user",
+  "priority": 5
+}

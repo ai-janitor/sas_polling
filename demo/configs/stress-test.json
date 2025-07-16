@@ -1,0 +1,12 @@
+{
+  "name": "Test Stress Testing Report",
+  "jobDefinitionUri": "stress-testing",
+  "arguments": {
+    "test_date": "2024-12-15",
+    "scenario_type": "Baseline",
+    "test_horizon": "2 Years",
+    "username": "cli_demo_user"
+  },
+  "submitted_by": "cli_demo_user",
+  "priority": 5
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Test RMBS Report",
+  "jobDefinitionUri": "rmbs-performance",
+  "arguments": {
+    "report_date": "2024-12-01",
+    "loan_type": "Prime",
+    "performance_metrics": "Enhanced",
+    "username": "cli_demo_user"
+  },
+  "submitted_by": "cli_demo_user",
+  "priority": 5
+}

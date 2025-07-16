@@ -1,0 +1,11 @@
+{
+  "name": "Test Trading Activity Report",
+  "jobDefinitionUri": "trading-activity",
+  "arguments": {
+    "trade_date": "2024-12-15",
+    "asset_class": "Bonds",
+    "username": "cli_demo_user"
+  },
+  "submitted_by": "cli_demo_user",
+  "priority": 5
+}

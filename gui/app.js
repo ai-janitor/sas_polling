@@ -177,13 +177,24 @@ class DataFitApp {
 
             this.showLoading('Submitting job...');
 
+            // Extract job name and remove it from arguments
+            const jobName = formData.job_name || `${this.state.currentReport.name} - ${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`;
+            const reportArguments = { ...formData };
+            delete reportArguments.job_name;
+
             const jobRequest = {
-                name: formData.job_name || `${this.state.currentReport.name} - ${new Date().toLocaleString()}`,
+                name: jobName,
                 jobDefinitionUri: this.state.currentReport.id,
-                arguments: formData,
+                arguments: reportArguments,
                 submitted_by: 'user',
                 priority: 5
             };
+
+            console.log('DEBUG: Form data collected:', formData);
+            console.log('DEBUG: Report arguments:', reportArguments);
+            console.log('DEBUG: Current report:', this.state.currentReport);
+            console.log('DEBUG: Job request payload:', jobRequest);
+            console.log('DEBUG: JSON stringified payload:', JSON.stringify(jobRequest, null, 2));
 
             const job = await this.makeRequest('/jobs', {
                 method: 'POST',
