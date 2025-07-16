@@ -1,0 +1,21 @@
+{
+  "name": "datafit-gui",
+  "version": "1.0.0",
+  "description": "DataFit SAS Viya Job Execution GUI",
+  "main": "index.html",
+  "scripts": {
+    "dev": "http-server . -p ${GUI_PORT:-3000} -o",
+    "build": "mkdir -p dist && cp -r . dist/ && rm -rf dist/node_modules dist/package*.json",
+    "start": "http-server dist -p ${GUI_PORT:-3000}",
+    "lint": "eslint *.js components/*.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": ["datafit", "sas", "viya", "reporting"],
+  "author": "DataFit Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "eslint": "^8.57.0"
+  },
+  "dependencies": {}
+}

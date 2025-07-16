@@ -1,0 +1,34 @@
+# =============================================================================
+# JOB SUBMISSION SERVICE PYTHON DEPENDENCIES
+# =============================================================================
+# Purpose: Python package requirements for job submission service
+# Framework: Flask with production-ready extensions
+#
+# DEPENDENCY CATEGORIES:
+# 1. Web Framework (Flask)
+# 2. HTTP Client (requests)
+# 3. Data Validation (pydantic)
+# 4. Configuration (python-dotenv)
+# 5. Production Server (gunicorn)
+# =============================================================================
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-Limiter==3.5.0
+Werkzeug==3.0.0
+
+# HTTP Client for service communication
+requests==2.31.0
+
+# Data Validation and Serialization
+pydantic==2.5.0
+
+# Configuration Management
+python-dotenv==1.0.0
+
+# Production WSGI Server
+gunicorn==21.2.0
+
+# Utility libraries
+click==8.1.7

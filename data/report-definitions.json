@@ -1,0 +1,435 @@
+{
+  "title": "DataFit SAS Viya Report Definitions",
+  "version": "1.0.0",
+  "last_updated": "2024-12-16",
+  "categories": [
+    {
+      "id": "commercial-mortgage",
+      "name": "Commercial Mortgage Backed Securities",
+      "description": "CMBS reporting and analytics",
+      "subcategories": [
+        {
+          "id": "cmbs-reports",
+          "name": "CMBS Reports",
+          "description": "Commercial mortgage backed securities analysis",
+          "reports": [
+            {
+              "id": "cmbs-user-manual",
+              "name": "CMBS User Manual Report",
+              "description": "Comprehensive CMBS analysis with user manual data",
+              "estimated_duration": 120,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "start_date",
+                    "type": "date",
+                    "label": "Start Date",
+                    "required": true,
+                    "description": "Analysis start date"
+                  },
+                  {
+                    "name": "end_date", 
+                    "type": "date",
+                    "label": "End Date",
+                    "required": true,
+                    "description": "Analysis end date"
+                  },
+                  {
+                    "name": "property_type",
+                    "type": "dropdown",
+                    "label": "Property Type",
+                    "required": false,
+                    "options": ["All", "Office", "Retail", "Multifamily", "Industrial", "Hotel"],
+                    "default": "All",
+                    "description": "Filter by property type"
+                  },
+                  {
+                    "name": "include_charts",
+                    "type": "checkbox",
+                    "label": "Include Charts",
+                    "required": false,
+                    "default": true,
+                    "description": "Include Plotly charts in output"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "residential-mortgage",
+      "name": "Residential Mortgage Backed Securities", 
+      "description": "RMBS reporting and analytics",
+      "subcategories": [
+        {
+          "id": "rmbs-reports",
+          "name": "RMBS Reports",
+          "description": "Residential mortgage backed securities analysis",
+          "reports": [
+            {
+              "id": "rmbs-performance",
+              "name": "RMBS Performance Report",
+              "description": "Residential mortgage performance analytics",
+              "estimated_duration": 90,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "report_date",
+                    "type": "date",
+                    "label": "Report Date",
+                    "required": true,
+                    "description": "Performance report date"
+                  },
+                  {
+                    "name": "pool_id",
+                    "type": "inputtext",
+                    "label": "Pool ID",
+                    "required": false,
+                    "pattern": "^[A-Z0-9-]+$",
+                    "description": "Specific pool identifier (optional)"
+                  },
+                  {
+                    "name": "loan_type",
+                    "type": "dropdown",
+                    "label": "Loan Type",
+                    "required": false,
+                    "options": ["All", "Prime", "Alt-A", "Subprime"],
+                    "default": "All",
+                    "description": "Filter by loan type"
+                  },
+                  {
+                    "name": "performance_metrics",
+                    "type": "radio",
+                    "label": "Performance Metrics",
+                    "required": true,
+                    "options": ["Standard", "Enhanced", "Full"],
+                    "default": "Standard",
+                    "description": "Level of performance detail"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "risk-management",
+      "name": "Risk Management",
+      "description": "Risk analysis and reporting",
+      "subcategories": [
+        {
+          "id": "var-reports",
+          "name": "Value at Risk Reports",
+          "description": "VaR calculations and analysis",
+          "reports": [
+            {
+              "id": "var-daily",
+              "name": "Daily VaR Report",
+              "description": "Daily Value at Risk calculations",
+              "estimated_duration": 60,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "calculation_date",
+                    "type": "date",
+                    "label": "Calculation Date",
+                    "required": true,
+                    "description": "VaR calculation date"
+                  },
+                  {
+                    "name": "confidence_level",
+                    "type": "dropdown",
+                    "label": "Confidence Level",
+                    "required": true,
+                    "options": ["95%", "99%", "99.9%"],
+                    "default": "99%",
+                    "description": "VaR confidence level"
+                  },
+                  {
+                    "name": "portfolio",
+                    "type": "inputtext",
+                    "label": "Portfolio",
+                    "required": false,
+                    "description": "Specific portfolio (leave blank for all)"
+                  },
+                  {
+                    "name": "include_stress",
+                    "type": "checkbox",
+                    "label": "Include Stress Tests",
+                    "required": false,
+                    "default": false,
+                    "description": "Include stress test scenarios"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "stress-testing",
+          "name": "Stress Testing",
+          "description": "Stress test scenarios and results",
+          "reports": [
+            {
+              "id": "stress-testing",
+              "name": "Stress Testing Report",
+              "description": "Comprehensive stress testing analysis",
+              "estimated_duration": 180,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "test_date",
+                    "type": "date",
+                    "label": "Test Date",
+                    "required": true,
+                    "description": "Stress test execution date"
+                  },
+                  {
+                    "name": "scenario_type",
+                    "type": "dropdown",
+                    "label": "Scenario Type",
+                    "required": true,
+                    "options": ["Baseline", "Adverse", "Severely Adverse", "Custom"],
+                    "default": "Baseline",
+                    "description": "Stress test scenario"
+                  },
+                  {
+                    "name": "test_horizon",
+                    "type": "dropdown",
+                    "label": "Test Horizon",
+                    "required": true,
+                    "options": ["1 Year", "2 Years", "3 Years"],
+                    "default": "2 Years",
+                    "description": "Stress test time horizon"
+                  },
+                  {
+                    "name": "include_capital",
+                    "type": "checkbox",
+                    "label": "Include Capital Analysis",
+                    "required": false,
+                    "default": true,
+                    "description": "Include capital adequacy analysis"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trading",
+      "name": "Trading Operations",
+      "description": "Trading activity and analysis",
+      "subcategories": [
+        {
+          "id": "trading-reports",
+          "name": "Trading Reports",
+          "description": "Trading activity analysis",
+          "reports": [
+            {
+              "id": "trading-activity",
+              "name": "Trading Activity Report",
+              "description": "Comprehensive trading activity analysis",
+              "estimated_duration": 45,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "trade_date",
+                    "type": "date",
+                    "label": "Trade Date",
+                    "required": true,
+                    "description": "Trading activity date"
+                  },
+                  {
+                    "name": "asset_class",
+                    "type": "dropdown",
+                    "label": "Asset Class",
+                    "required": false,
+                    "options": ["All", "Bonds", "Equities", "Derivatives", "FX"],
+                    "default": "All",
+                    "description": "Filter by asset class"
+                  },
+                  {
+                    "name": "trader_id",
+                    "type": "inputtext",
+                    "label": "Trader ID",
+                    "required": false,
+                    "description": "Specific trader (optional)"
+                  },
+                  {
+                    "name": "include_pnl",
+                    "type": "checkbox",
+                    "label": "Include P&L Analysis",
+                    "required": false,
+                    "default": true,
+                    "description": "Include profit and loss analysis"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compliance",
+      "name": "Compliance & Regulatory",
+      "description": "Compliance and regulatory reporting",
+      "subcategories": [
+        {
+          "id": "aml-reports",
+          "name": "Anti-Money Laundering",
+          "description": "AML monitoring and alerts",
+          "reports": [
+            {
+              "id": "aml-alerts",
+              "name": "AML Alerts Report",
+              "description": "Anti-money laundering alerts and investigations",
+              "estimated_duration": 75,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "alert_date",
+                    "type": "date",
+                    "label": "Alert Date",
+                    "required": true,
+                    "description": "Date of AML alerts"
+                  },
+                  {
+                    "name": "alert_type",
+                    "type": "dropdown",
+                    "label": "Alert Type",
+                    "required": false,
+                    "options": ["All", "Suspicious Activity", "Large Cash", "Wire Transfer", "Structuring"],
+                    "default": "All",
+                    "description": "Filter by alert type"
+                  },
+                  {
+                    "name": "risk_level",
+                    "type": "radio",
+                    "label": "Risk Level",
+                    "required": false,
+                    "options": ["All", "High", "Medium", "Low"],
+                    "default": "All",
+                    "description": "Filter by risk level"
+                  },
+                  {
+                    "name": "include_investigations",
+                    "type": "checkbox",
+                    "label": "Include Investigations",
+                    "required": false,
+                    "default": true,
+                    "description": "Include investigation details"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "focus-reports",
+          "name": "FOCUS Reports",
+          "description": "Financial and Operational Combined Uniform Single reports",
+          "reports": [
+            {
+              "id": "focus-manual",
+              "name": "FOCUS Manual Report",
+              "description": "Financial and operational reporting per FOCUS requirements",
+              "estimated_duration": 150,
+              "output_formats": ["html", "pdf", "csv", "xlsx"],
+              "schema": {
+                "fields": [
+                  {
+                    "name": "reporting_date",
+                    "type": "date",
+                    "label": "Reporting Date",
+                    "required": true,
+                    "description": "FOCUS reporting date"
+                  },
+                  {
+                    "name": "report_type",
+                    "type": "dropdown",
+                    "label": "Report Type",
+                    "required": true,
+                    "options": ["Monthly", "Quarterly", "Annual"],
+                    "default": "Monthly",
+                    "description": "FOCUS report frequency"
+                  },
+                  {
+                    "name": "entity_type",
+                    "type": "dropdown",
+                    "label": "Entity Type",
+                    "required": true,
+                    "options": ["Broker-Dealer", "Investment Advisor", "Both"],
+                    "default": "Broker-Dealer",
+                    "description": "Type of regulated entity"
+                  },
+                  {
+                    "name": "include_schedules",
+                    "type": "checkbox",
+                    "label": "Include All Schedules",
+                    "required": false,
+                    "default": true,
+                    "description": "Include detailed schedules"
+                  },
+                  {
+                    "name": "username",
+                    "type": "hidden",
+                    "required": true,
+                    "description": "User identifier for audit trail"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+Portfolio,Scenario,Asset_Class,Current_Value,Stressed_Value,Loss_Amount,Loss_Percentage,Capital_Impact,Risk_Weight,Tier1_Ratio_Impact
+Commercial Loans,Baseline,Commercial Real Estate,15000000,14850000,150000,1.0,75000,1.0,0.002
+Commercial Loans,Adverse,Commercial Real Estate,15000000,13500000,1500000,10.0,750000,1.5,0.025
+Commercial Loans,Severely Adverse,Commercial Real Estate,15000000,12000000,3000000,20.0,1500000,2.0,0.050
+Consumer Loans,Baseline,Residential Mortgages,25000000,24750000,250000,1.0,125000,0.5,0.001
+Consumer Loans,Adverse,Residential Mortgages,25000000,22500000,2500000,10.0,1250000,0.75,0.025
+Consumer Loans,Severely Adverse,Residential Mortgages,25000000,20000000,5000000,20.0,2500000,1.0,0.063
+Trading Book,Baseline,Corporate Bonds,8000000,7920000,80000,1.0,80000,1.0,0.002
+Trading Book,Adverse,Corporate Bonds,8000000,7200000,800000,10.0,800000,1.25,0.020
+Trading Book,Severely Adverse,Corporate Bonds,8000000,6400000,1600000,20.0,1600000,1.5,0.040
+Trading Book,Baseline,Equities,12000000,11760000,240000,2.0,240000,1.0,0.006
+Trading Book,Adverse,Equities,12000000,9600000,2400000,20.0,2400000,1.5,0.060
+Trading Book,Severely Adverse,Equities,12000000,7200000,4800000,40.0,4800000,2.0,0.120
+Consumer Loans,Baseline,Credit Cards,5000000,4950000,50000,1.0,50000,0.75,0.001
+Consumer Loans,Adverse,Credit Cards,5000000,4250000,750000,15.0,750000,1.0,0.019
+Consumer Loans,Severely Adverse,Credit Cards,5000000,3500000,1500000,30.0,1500000,1.25,0.038

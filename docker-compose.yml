@@ -1,0 +1,256 @@
+# =============================================================================
+# DATAFIT DOCKER COMPOSE ORCHESTRATION
+# =============================================================================
+# Purpose: Multi-service container orchestration for development and production
+# Services: GUI (Nginx), Job Submission (Flask), Job Polling (Flask+Workers)
+# 
+# STRICT REQUIREMENTS:
+# - All services use configuration from config.dev.env
+# - Proper service dependencies and health checks
+# - Volume mounts for data persistence and development
+# - Network isolation and inter-service communication
+# - Graceful shutdown and restart policies
+#
+# SERVICES:
+# 1. datafit-gui: Frontend SPA served by Nginx
+# 2. job-submission: REST API for job submission
+# 3. job-polling: Job execution engine with FIFO queue
+# 4. redis: Cache and queue backend (optional)
+#
+# NETWORKS:
+# - datafit-network: Internal network for service communication
+#
+# VOLUMES:
+# - datafit-data: Persistent data storage
+# - datafit-logs: Log file storage
+# - datafit-temp: Temporary file storage
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # GUI SERVICE - Frontend Single Page Application
+  # ==========================================================================
+  datafit-gui:
+    build:
+      context: ./gui
+      dockerfile: Dockerfile
+      target: production
+    container_name: datafit-gui
+    ports:
+      - "${GUI_PORT:-3000}:${GUI_PORT:-3000}"
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=http://job-submission:${SUBMISSION_PORT}
+    networks:
+      - datafit-network
+    depends_on:
+      job-submission:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${GUI_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - datafit-logs:/var/log/nginx
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.datafit-gui.rule=Host(`localhost`)"
+      - "traefik.http.services.datafit-gui.loadbalancer.server.port=3000"
+
+  # ==========================================================================
+  # JOB SUBMISSION SERVICE - REST API
+  # ==========================================================================
+  job-submission:
+    build:
+      context: ./job-submission
+      dockerfile: Dockerfile
+    container_name: datafit-job-submission
+    ports:
+      - "${SUBMISSION_PORT:-5000}:${SUBMISSION_PORT:-5000}"
+    environment:
+      - SUBMISSION_PORT=${SUBMISSION_PORT}
+      - SUBMISSION_HOST=${SUBMISSION_HOST}
+      - POLLING_SERVICE_URL=http://job-polling:${POLLING_PORT}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
+    env_file:
+      - config.dev.env
+    networks:
+      - datafit-network
+    depends_on:
+      job-polling:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${SUBMISSION_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - datafit-logs:/var/log/datafit
+      - ./data/report-definitions.json:/app/data/report-definitions.json:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.datafit-submission.rule=Host(`api.localhost`)"
+      - "traefik.http.services.datafit-submission.loadbalancer.server.port=5000"
+
+  # ==========================================================================
+  # JOB POLLING SERVICE - Job Execution Engine
+  # ==========================================================================
+  job-polling:
+    build:
+      context: ./job-polling
+      dockerfile: Dockerfile
+    container_name: datafit-job-polling
+    ports:
+      - "${POLLING_PORT:-5001}:${POLLING_PORT:-5001}"
+    environment:
+      - POLLING_PORT=${POLLING_PORT}
+      - POLLING_HOST=${POLLING_HOST}
+      - POLLING_WORKERS=${POLLING_WORKERS:-4}
+      - POLLING_QUEUE_SIZE=${POLLING_QUEUE_SIZE:-100}
+      - POLLING_JOB_TIMEOUT=${POLLING_JOB_TIMEOUT:-300}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - FILE_STORAGE_PATH=/tmp/datafit/files
+      - REPORTS_DATA_PATH=/app/mock-data
+      - REPORTS_TEMPLATE_PATH=/app/templates
+      - REPORTS_OUTPUT_PATH=/tmp/datafit/output
+    env_file:
+      - config.dev.env
+    networks:
+      - datafit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${POLLING_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - datafit-data:/tmp/datafit
+      - datafit-logs:/var/log/datafit
+      - ./mock-data:/app/mock-data:ro
+      - ./templates:/app/templates:ro
+      - ./reports:/app/reports:ro
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # ==========================================================================
+  # REDIS SERVICE - Cache and Queue Backend (Optional)
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: datafit-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - datafit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    profiles:
+      - redis
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  datafit-network:
+    driver: bridge
+    name: ${DOCKER_NETWORK:-datafit-network}
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  datafit-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VOLUME_TEMP:-/tmp/datafit}
+  
+  datafit-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VOLUME_LOGS:-/var/log/datafit}
+  
+  redis-data:
+    driver: local
+
+# =============================================================================
+# DEVELOPMENT OVERRIDE
+# =============================================================================
+# To use development mode:
+# docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Create docker-compose.dev.yml with:
+# services:
+#   datafit-gui:
+#     build:
+#       target: development
+#     volumes:
+#       - ./gui:/app
+#     environment:
+#       - NODE_ENV=development
+#   
+#   job-submission:
+#     volumes:
+#       - ./job-submission:/app
+#     environment:
+#       - FLASK_ENV=development
+#       - FLASK_DEBUG=true
+#   
+#   job-polling:
+#     volumes:
+#       - ./job-polling:/app
+#       - ./reports:/app/reports
+#     environment:
+#       - FLASK_ENV=development
+#       - FLASK_DEBUG=true
+#
+# =============================================================================
+# PRODUCTION CONSIDERATIONS
+# =============================================================================
+# For production deployment:
+# 1. Use production environment file (config.prod.env)
+# 2. Enable TLS/SSL termination
+# 3. Add reverse proxy (Traefik/Nginx)
+# 4. Enable monitoring and logging
+# 5. Use external volumes for persistence
+# 6. Configure backup strategies
+# 7. Set resource limits and requests
+# 8. Enable security scanning
+# 9. Use secrets management
+# 10. Configure CI/CD pipeline
+# =============================================================================

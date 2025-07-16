@@ -1,0 +1,16 @@
+Date,Portfolio,Confidence_Level,Holding_Period,VaR_Amount,Expected_Shortfall,Volatility,Correlation_Adj,Model_Type,Currency
+2024-07-15,Trading Book,99%,1 Day,2850000,4275000,0.0185,0.85,Historical,USD
+2024-07-15,Trading Book,95%,1 Day,1950000,2925000,0.0185,0.85,Historical,USD
+2024-07-15,Banking Book,99%,1 Day,1250000,1875000,0.0098,0.72,Parametric,USD
+2024-07-15,Banking Book,95%,1 Day,875000,1312500,0.0098,0.72,Parametric,USD
+2024-07-14,Trading Book,99%,1 Day,3100000,4650000,0.0198,0.82,Historical,USD
+2024-07-14,Trading Book,95%,1 Day,2150000,3225000,0.0198,0.82,Historical,USD
+2024-07-14,Banking Book,99%,1 Day,1320000,1980000,0.0102,0.75,Parametric,USD
+2024-07-14,Banking Book,95%,1 Day,925000,1387500,0.0102,0.75,Parametric,USD
+2024-07-13,Trading Book,99%,1 Day,2650000,3975000,0.0172,0.88,Historical,USD
+2024-07-13,Trading Book,95%,1 Day,1825000,2737500,0.0172,0.88,Historical,USD
+2024-07-13,Banking Book,99%,1 Day,1180000,1770000,0.0092,0.69,Parametric,USD
+2024-07-13,Banking Book,95%,1 Day,825000,1237500,0.0092,0.69,Parametric,USD
+2024-07-12,Trading Book,99%,10 Days,9015000,13522500,0.0581,0.85,Monte Carlo,USD
+2024-07-12,Trading Book,95%,10 Days,6170000,9255000,0.0581,0.85,Monte Carlo,USD
+2024-07-12,Banking Book,99%,10 Days,3952500,5928750,0.0310,0.72,Monte Carlo,USD

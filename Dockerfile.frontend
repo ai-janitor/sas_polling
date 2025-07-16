@@ -1,0 +1,46 @@
+# =============================================================================
+# DATAFIT FRONTEND DOCKERFILE
+# =============================================================================
+# Purpose: Containerize the vanilla JavaScript SPA frontend
+# Technology: Nginx for serving static files
+# Requirements: Serve HTML, CSS, JS files with proper MIME types
+#
+# STRICT REQUIREMENTS:
+# - Lightweight Alpine Linux base
+# - Nginx for static file serving
+# - Proper MIME type configuration
+# - Security headers
+# - Health check endpoints
+# =============================================================================
+
+FROM nginx:alpine
+
+# Set maintainer info
+LABEL maintainer="DataFit Team"
+LABEL description="DataFit Frontend - Vanilla JavaScript SPA"
+
+# Copy frontend files
+COPY gui/ /usr/share/nginx/html/
+
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Create nginx logs directory
+RUN mkdir -p /var/log/nginx
+
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
+
+# Add health endpoint
+RUN echo '<!DOCTYPE html><html><body><h1>OK</h1></body></html>' > /usr/share/nginx/html/health
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,418 @@
+{
+  "categories": [
+    {
+      "name": "Risk Management",
+      "description": "Financial risk assessment and monitoring reports",
+      "reports": [
+        {
+          "id": "var_daily",
+          "name": "Daily Value at Risk Report",
+          "description": "Comprehensive daily VaR calculations across all portfolios",
+          "category": "Risk Management",
+          "estimatedDuration": 120,
+          "outputFormats": ["HTML", "PDF", "CSV", "XLS"],
+          "prompts": [
+            {
+              "calculation_date": {
+                "active": true,
+                "hide": false,
+                "inputType": "date",
+                "label": "Calculation Date",
+                "required": true,
+                "defaultValue": "",
+                "validation": {
+                  "maxDate": "today"
+                },
+                "help": "Select the date for VaR calculations"
+              }
+            },
+            {
+              "confidence_level": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Confidence Level",
+                "required": true,
+                "options": [
+                  {"value": "95", "label": "95%"},
+                  {"value": "99", "label": "99%"},
+                  {"value": "99.9", "label": "99.9%"}
+                ],
+                "defaultValue": "99",
+                "help": "Statistical confidence level for VaR calculation"
+              }
+            },
+            {
+              "portfolio_filter": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Portfolio Filter",
+                "required": false,
+                "options": [
+                  {"value": "all", "label": "All Portfolios"},
+                  {"value": "equity", "label": "Equity Only"},
+                  {"value": "fixed_income", "label": "Fixed Income Only"},
+                  {"value": "derivatives", "label": "Derivatives Only"}
+                ],
+                "defaultValue": "all",
+                "help": "Filter by portfolio type"
+              }
+            },
+            {
+              "include_charts": {
+                "active": true,
+                "hide": false,
+                "inputType": "checkbox",
+                "label": "Include Visualizations",
+                "checkboxLabel": "Generate charts and graphs",
+                "required": false,
+                "defaultValue": true,
+                "help": "Include Plotly charts in the report"
+              }
+            }
+          ]
+        },
+        {
+          "id": "stress_testing",
+          "name": "Stress Testing Analysis",
+          "description": "Portfolio stress testing under various market scenarios",
+          "category": "Risk Management",
+          "estimatedDuration": 300,
+          "outputFormats": ["HTML", "PDF", "CSV"],
+          "prompts": [
+            {
+              "scenario_type": {
+                "active": true,
+                "hide": false,
+                "inputType": "radio",
+                "label": "Stress Test Scenario",
+                "required": true,
+                "options": [
+                  {"value": "2008_crisis", "label": "2008 Financial Crisis"},
+                  {"value": "covid_2020", "label": "COVID-19 2020 Market Shock"},
+                  {"value": "custom", "label": "Custom Scenario"}
+                ],
+                "defaultValue": "2008_crisis",
+                "help": "Select the stress testing scenario to apply"
+              }
+            },
+            {
+              "shock_magnitude": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Shock Magnitude",
+                "required": true,
+                "options": [
+                  {"value": "mild", "label": "Mild (1 std dev)"},
+                  {"value": "moderate", "label": "Moderate (2 std dev)"},
+                  {"value": "severe", "label": "Severe (3 std dev)"}
+                ],
+                "defaultValue": "moderate",
+                "help": "Severity of the stress test shock"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Regulatory Reporting",
+      "description": "Compliance and regulatory reporting requirements",
+      "reports": [
+        {
+          "id": "focus_manual",
+          "name": "FOCUS Manual Report",
+          "description": "Financial and Operational Combined Uniform Single Report",
+          "category": "Regulatory Reporting",
+          "estimatedDuration": 180,
+          "outputFormats": ["HTML", "PDF", "XLS"],
+          "prompts": [
+            {
+              "reporting_period": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Reporting Period",
+                "required": true,
+                "options": [
+                  {"value": "monthly", "label": "Monthly"},
+                  {"value": "quarterly", "label": "Quarterly"}
+                ],
+                "defaultValue": "monthly",
+                "help": "Select the reporting frequency"
+              }
+            },
+            {
+              "period_end_date": {
+                "active": true,
+                "hide": false,
+                "inputType": "date",
+                "label": "Period End Date",
+                "required": true,
+                "validation": {
+                  "maxDate": "today"
+                },
+                "help": "Last day of the reporting period"
+              }
+            },
+            {
+              "include_schedules": {
+                "active": true,
+                "hide": false,
+                "inputType": "checkbox",
+                "label": "Include Supporting Schedules",
+                "checkboxLabel": "Generate detailed supporting schedules",
+                "required": false,
+                "defaultValue": true,
+                "help": "Include detailed breakdown schedules"
+              }
+            }
+          ]
+        },
+        {
+          "id": "aml_monitoring",
+          "name": "AML Monitoring Report",
+          "description": "Anti-Money Laundering transaction monitoring and alerts",
+          "category": "Regulatory Reporting",
+          "estimatedDuration": 90,
+          "outputFormats": ["HTML", "PDF", "CSV"],
+          "prompts": [
+            {
+              "monitoring_date": {
+                "active": true,
+                "hide": false,
+                "inputType": "date",
+                "label": "Monitoring Date",
+                "required": true,
+                "defaultValue": "",
+                "validation": {
+                  "maxDate": "today"
+                },
+                "help": "Date for AML monitoring review"
+              }
+            },
+            {
+              "alert_threshold": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Alert Threshold",
+                "required": true,
+                "options": [
+                  {"value": "low", "label": "Low Risk"},
+                  {"value": "medium", "label": "Medium Risk"},
+                  {"value": "high", "label": "High Risk"},
+                  {"value": "all", "label": "All Alerts"}
+                ],
+                "defaultValue": "medium",
+                "help": "Minimum risk level for included alerts"
+              }
+            },
+            {
+              "include_false_positives": {
+                "active": true,
+                "hide": false,
+                "inputType": "checkbox",
+                "label": "Include False Positives",
+                "checkboxLabel": "Show cleared/false positive alerts",
+                "required": false,
+                "defaultValue": false,
+                "help": "Include alerts that were cleared as false positives"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Credit Risk",
+      "description": "Credit risk assessment and portfolio analysis",
+      "reports": [
+        {
+          "id": "cmbs_user_manual",
+          "name": "CMBS User Manual Report",
+          "description": "Commercial Mortgage-Backed Securities detailed analysis",
+          "category": "Credit Risk",
+          "estimatedDuration": 240,
+          "outputFormats": ["HTML", "PDF", "XLS"],
+          "prompts": [
+            {
+              "analysis_date": {
+                "active": true,
+                "hide": false,
+                "inputType": "date",
+                "label": "Analysis Date",
+                "required": true,
+                "validation": {
+                  "maxDate": "today"
+                },
+                "help": "Date for CMBS analysis"
+              }
+            },
+            {
+              "property_type": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Property Type Filter",
+                "required": false,
+                "options": [
+                  {"value": "all", "label": "All Property Types"},
+                  {"value": "office", "label": "Office"},
+                  {"value": "retail", "label": "Retail"},
+                  {"value": "multifamily", "label": "Multifamily"},
+                  {"value": "industrial", "label": "Industrial"},
+                  {"value": "hotel", "label": "Hotel"}
+                ],
+                "defaultValue": "all",
+                "help": "Filter by commercial property type"
+              }
+            },
+            {
+              "risk_metrics": {
+                "active": true,
+                "hide": false,
+                "inputType": "checkbox",
+                "label": "Include Risk Metrics",
+                "checkboxLabel": "Calculate detailed risk metrics",
+                "required": false,
+                "defaultValue": true,
+                "help": "Include DSCR, LTV, and other risk calculations"
+              }
+            }
+          ]
+        },
+        {
+          "id": "rmbs_performance",
+          "name": "RMBS Performance Report",
+          "description": "Residential Mortgage-Backed Securities performance analysis",
+          "category": "Credit Risk",
+          "estimatedDuration": 200,
+          "outputFormats": ["HTML", "PDF", "CSV", "XLS"],
+          "prompts": [
+            {
+              "performance_date": {
+                "active": true,
+                "hide": false,
+                "inputType": "date",
+                "label": "Performance Date",
+                "required": true,
+                "validation": {
+                  "maxDate": "today"
+                },
+                "help": "Date for RMBS performance analysis"
+              }
+            },
+            {
+              "vintage_filter": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Vintage Filter",
+                "required": false,
+                "options": [
+                  {"value": "all", "label": "All Vintages"},
+                  {"value": "2020", "label": "2020"},
+                  {"value": "2021", "label": "2021"},
+                  {"value": "2022", "label": "2022"},
+                  {"value": "2023", "label": "2023"},
+                  {"value": "2024", "label": "2024"}
+                ],
+                "defaultValue": "all",
+                "help": "Filter by loan origination year"
+              }
+            },
+            {
+              "delinquency_analysis": {
+                "active": true,
+                "hide": false,
+                "inputType": "checkbox",
+                "label": "Delinquency Analysis",
+                "checkboxLabel": "Include detailed delinquency trends",
+                "required": false,
+                "defaultValue": true,
+                "help": "Analyze delinquency patterns and trends"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trading Analytics",
+      "description": "Trading performance and market analysis reports",
+      "reports": [
+        {
+          "id": "trading_activity",
+          "name": "Trading Activity Report",
+          "description": "Comprehensive trading activity and performance analysis",
+          "category": "Trading Analytics",
+          "estimatedDuration": 150,
+          "outputFormats": ["HTML", "PDF", "CSV"],
+          "prompts": [
+            {
+              "trade_date": {
+                "active": true,
+                "hide": false,
+                "inputType": "date",
+                "label": "Trade Date",
+                "required": true,
+                "validation": {
+                  "maxDate": "today"
+                },
+                "help": "Date for trading activity analysis"
+              }
+            },
+            {
+              "asset_class": {
+                "active": true,
+                "hide": false,
+                "inputType": "dropdown",
+                "label": "Asset Class",
+                "required": false,
+                "options": [
+                  {"value": "all", "label": "All Asset Classes"},
+                  {"value": "equity", "label": "Equity"},
+                  {"value": "fixed_income", "label": "Fixed Income"},
+                  {"value": "derivatives", "label": "Derivatives"},
+                  {"value": "forex", "label": "Foreign Exchange"}
+                ],
+                "defaultValue": "all",
+                "help": "Filter by asset class"
+              }
+            },
+            {
+              "pnl_analysis": {
+                "active": true,
+                "hide": false,
+                "inputType": "checkbox",
+                "label": "P&L Analysis",
+                "checkboxLabel": "Include profit and loss breakdown",
+                "required": false,
+                "defaultValue": true,
+                "help": "Include detailed P&L analysis by trader and desk"
+              }
+            },
+            {
+              "trader_filter": {
+                "active": true,
+                "hide": false,
+                "inputType": "inputtext",
+                "label": "Trader ID Filter",
+                "required": false,
+                "placeholder": "Enter trader ID or leave blank for all",
+                "validation": {
+                  "pattern": "[A-Z0-9]*",
+                  "maxLength": 10
+                },
+                "help": "Optional filter by specific trader ID"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

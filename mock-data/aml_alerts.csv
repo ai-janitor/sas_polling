@@ -1,0 +1,16 @@
+Alert_ID,Date_Created,Customer_ID,Alert_Type,Priority,Status,Amount,Currency,Assigned_Analyst,Investigation_Days,Disposition
+AML001,2024-07-15,CUST12345,Structuring,High,Open,48500,USD,A001,1,Pending
+AML002,2024-07-14,CUST23456,Unusual Pattern,Medium,Escalated,125000,USD,A002,3,SAR Filed
+AML003,2024-07-13,CUST34567,Cash Intensive,Low,Closed,15800,USD,A003,2,False Positive
+AML004,2024-07-12,CUST45678,Cross Border,High,Open,285000,EUR,A001,2,Under Review
+AML005,2024-07-11,CUST56789,Velocity,Medium,Closed,67500,USD,A004,1,False Positive
+AML006,2024-07-10,CUST67890,High Risk Country,High,Escalated,195000,USD,A002,4,CTR Filed
+AML007,2024-07-09,CUST78901,PEP Transaction,Medium,Closed,45000,GBP,A003,3,Customer Verified
+AML008,2024-07-08,CUST89012,Round Dollar,Low,Closed,10000,USD,A005,1,False Positive
+AML009,2024-07-07,CUST90123,Multiple Locations,Medium,Open,89500,CAD,A004,1,Pending
+AML010,2024-07-06,CUST01234,Wire Frequency,High,Escalated,345000,USD,A001,5,SAR Filed
+AML011,2024-07-05,CUST11111,Cash Deposit,Low,Closed,9950,USD,A005,1,False Positive
+AML012,2024-07-04,CUST22222,Transaction Timing,Medium,Closed,55000,USD,A003,2,Customer Contacted
+AML013,2024-07-03,CUST33333,Shell Company,High,Open,425000,EUR,A002,3,Under Review
+AML014,2024-07-02,CUST44444,Third Party Check,Low,Closed,8750,USD,A004,1,False Positive
+AML015,2024-07-01,CUST55555,Rapid Movement,High,Escalated,675000,USD,A001,6,Regulatory Referral

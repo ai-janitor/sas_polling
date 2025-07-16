@@ -1,0 +1,187 @@
+{
+  "demo_jobs": {
+    "cmbs_user_manual": {
+      "name": "Demo CMBS User Manual Report",
+      "jobDefinitionUri": "cmbs-user-manual",
+      "arguments": {
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
+        "property_type": "Office",
+        "include_charts": true,
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 5,
+      "description": "Comprehensive CMBS analysis with user manual data for office properties"
+    },
+    "rmbs_performance": {
+      "name": "Demo RMBS Performance Report",
+      "jobDefinitionUri": "rmbs-performance",
+      "arguments": {
+        "report_date": "2024-12-01",
+        "pool_id": "DEMO-POOL-2024-001",
+        "loan_type": "Prime",
+        "performance_metrics": "Enhanced",
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 3,
+      "description": "RMBS performance analytics for prime loan pool"
+    },
+    "var_daily": {
+      "name": "Demo Daily VaR Report",
+      "jobDefinitionUri": "var-daily",
+      "arguments": {
+        "calculation_date": "2024-12-15",
+        "confidence_level": "99%",
+        "portfolio": "MAIN_PORTFOLIO",
+        "include_stress": true,
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 1,
+      "description": "Daily Value at Risk calculations with stress testing"
+    },
+    "stress_testing": {
+      "name": "Demo Stress Testing Report",
+      "jobDefinitionUri": "stress-testing",
+      "arguments": {
+        "test_date": "2024-12-15",
+        "scenario_type": "Severely Adverse",
+        "test_horizon": "2 Years",
+        "include_capital": true,
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 2,
+      "description": "Stress testing under severely adverse scenarios"
+    },
+    "trading_activity": {
+      "name": "Demo Trading Activity Report",
+      "jobDefinitionUri": "trading-activity",
+      "arguments": {
+        "trade_date": "2024-12-15",
+        "asset_class": "Bonds",
+        "trader_id": "DEMO_TRADER_001",
+        "include_pnl": true,
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 4,
+      "description": "Trading activity analysis for bond transactions"
+    },
+    "aml_alerts": {
+      "name": "Demo AML Alerts Report",
+      "jobDefinitionUri": "aml-alerts",
+      "arguments": {
+        "alert_date": "2024-12-15",
+        "alert_type": "Suspicious Activity",
+        "risk_level": "High",
+        "include_investigations": true,
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 1,
+      "description": "Anti-money laundering alerts for suspicious activities"
+    },
+    "focus_manual": {
+      "name": "Demo FOCUS Manual Report",
+      "jobDefinitionUri": "focus-manual",
+      "arguments": {
+        "reporting_date": "2024-12-01",
+        "report_type": "Monthly",
+        "entity_type": "Broker-Dealer",
+        "include_schedules": true,
+        "username": "demo_user"
+      },
+      "submitted_by": "cli_demo",
+      "priority": 3,
+      "description": "FOCUS regulatory reporting for broker-dealer entity"
+    }
+  },
+  "error_test_jobs": {
+    "invalid_empty": {
+      "name": "",
+      "jobDefinitionUri": "",
+      "arguments": {},
+      "submitted_by": "",
+      "priority": 0,
+      "description": "Test case with empty required fields"
+    },
+    "invalid_report": {
+      "name": "Invalid Report Test",
+      "jobDefinitionUri": "non-existent-report-id",
+      "arguments": {
+        "test": "value"
+      },
+      "submitted_by": "test_user",
+      "priority": 5,
+      "description": "Test case with non-existent report ID"
+    },
+    "invalid_priority": {
+      "name": "Invalid Priority Test",
+      "jobDefinitionUri": "cmbs-user-manual",
+      "arguments": {
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
+        "username": "demo_user"
+      },
+      "submitted_by": "test_user",
+      "priority": 15,
+      "description": "Test case with invalid priority value"
+    },
+    "missing_required_args": {
+      "name": "Missing Arguments Test",
+      "jobDefinitionUri": "cmbs-user-manual",
+      "arguments": {
+        "property_type": "Office"
+      },
+      "submitted_by": "test_user",
+      "priority": 5,
+      "description": "Test case with missing required arguments"
+    }
+  },
+  "performance_test_jobs": {
+    "quick_var_1": {
+      "name": "Performance Test VaR 1",
+      "jobDefinitionUri": "var-daily",
+      "arguments": {
+        "calculation_date": "2024-12-15",
+        "confidence_level": "95%",
+        "username": "perf_test_user"
+      },
+      "submitted_by": "performance_test",
+      "priority": 5
+    },
+    "quick_var_2": {
+      "name": "Performance Test VaR 2", 
+      "jobDefinitionUri": "var-daily",
+      "arguments": {
+        "calculation_date": "2024-12-16",
+        "confidence_level": "99%",
+        "username": "perf_test_user"
+      },
+      "submitted_by": "performance_test",
+      "priority": 5
+    },
+    "quick_var_3": {
+      "name": "Performance Test VaR 3",
+      "jobDefinitionUri": "var-daily", 
+      "arguments": {
+        "calculation_date": "2024-12-17",
+        "confidence_level": "99.9%",
+        "username": "perf_test_user"
+      },
+      "submitted_by": "performance_test",
+      "priority": 5
+    }
+  },
+  "metadata": {
+    "created": "2024-12-16",
+    "version": "1.0.0",
+    "description": "Sample job configurations for DataFit CLI demo and testing",
+    "total_demo_jobs": 7,
+    "total_error_tests": 4,
+    "total_performance_tests": 3
+  }
+}

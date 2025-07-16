@@ -1,0 +1,418 @@
+{
+  "categories": [
+    {
+      "name": "datafit Help",
+      "subcategories": [
+        {
+          "name": "Asset-Backed Securities",
+          "reports": [
+            {
+              "name": "CMBS User Manual",
+              "id": "1b2e6894-e8d4-4eba-b318-999ca330bb19",
+              "prompts": [
+                {
+                  "hidden_username": {
+                    "active": "true",
+                    "hide": "true",
+                    "inputType": "inputtext",
+                    "label": "SEC User Name"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "RMBS Performance Report",
+              "id": "2c3f7895-f9e5-5fbc-c429-aaa0cb441cc20",
+              "prompts": [
+                {
+                  "asofqtr": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "As of Quarter",
+                    "options": ["Q1", "Q2", "Q3", "Q4"]
+                  },
+                  "year": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "inputtext",
+                    "label": "Year"
+                  },
+                  "outputtp": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Output Format",
+                    "options": ["XLS", "PDF", "CSV"]
+                  },
+                  "hidden_username": {
+                    "active": "true",
+                    "hide": "true",
+                    "inputType": "inputtext",
+                    "label": "SEC User Name"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "CLO Analysis Dashboard",
+              "id": "3d4e8996-0af6-6gcd-d53a-bbb1dc552dd31",
+              "prompts": [
+                {
+                  "vintage": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Vintage Year",
+                    "options": ["2020", "2021", "2022", "2023", "2024"]
+                  },
+                  "rating": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Rating Filter",
+                    "options": ["AAA", "AA", "A", "BBB", "BB", "B", "ALL"]
+                  },
+                  "hidden_username": {
+                    "active": "true",
+                    "hide": "true",
+                    "inputType": "inputtext",
+                    "label": "SEC User Name"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Credit Risk",
+          "reports": [
+            {
+              "name": "PD Model Validation",
+              "id": "4e5f9a07-1bg7-7hde-e64b-ccc2ed663ee42",
+              "prompts": [
+                {
+                  "model_version": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Model Version",
+                    "options": ["v1.0", "v1.1", "v2.0", "v2.1"]
+                  },
+                  "date_range": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "daterange",
+                    "label": "Validation Period"
+                  },
+                  "hidden_username": {
+                    "active": "true",
+                    "hide": "true",
+                    "inputType": "inputtext",
+                    "label": "SEC User Name"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Stress Test Results",
+              "id": "5f60ab18-2ch8-8ief-f75c-ddd3fe774ff53",
+              "prompts": [
+                {
+                  "scenario": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Stress Scenario",
+                    "options": ["Baseline", "Adverse", "Severely Adverse"]
+                  },
+                  "portfolio": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Portfolio",
+                    "options": ["Commercial", "Consumer", "Trading", "All"]
+                  },
+                  "outputtp": {
+                    "active": "true",
+                    "hide": "false",
+                    "inputType": "dropdown",
+                    "label": "Output Format",
+                    "options": ["XLS", "PDF"]
+                  },
+                  "hidden_username": {
+                    "active": "true",
+                    "hide": "true",
+                    "inputType": "inputtext",
+                    "label": "SEC User Name"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Finra Data Mart",
+      "reports": [
+        {
+          "name": "FOCUS User Manual",
+          "id": "a4a3a357-b346-48a4-b7ca-24ae8f292de7",
+          "prompts": [
+            {
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trading Activity Report",
+          "id": "b5b4b468-c457-59b5-c8db-35bf9f3a3ef8",
+          "prompts": [
+            {
+              "start_date": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "date",
+                "label": "Start Date"
+              },
+              "end_date": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "date",
+                "label": "End Date"
+              },
+              "security_type": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Security Type",
+                "options": ["Equity", "Fixed Income", "Options", "Futures", "All"]
+              },
+              "sortorder": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Sort Order",
+                "options": ["Name", "Volume", "Date"]
+              },
+              "outputtp": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Output Format",
+                "options": ["XLS", "CSV", "PDF"]
+              },
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Regulatory Filing Summary",
+          "id": "c6c5c579-d568-6ac6-d9ec-46c0a04b4f09",
+          "prompts": [
+            {
+              "filing_type": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Filing Type",
+                "options": ["10-K", "10-Q", "8-K", "Form 4", "All"]
+              },
+              "asofqtr": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Quarter",
+                "options": ["Q1", "Q2", "Q3", "Q4"]
+              },
+              "year": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "inputtext",
+                "label": "Year"
+              },
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Risk",
+      "reports": [
+        {
+          "name": "VaR Daily Report",
+          "id": "d7d6d68a-e679-7bd7-eafd-57d1b15c5g10",
+          "prompts": [
+            {
+              "confidence_level": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Confidence Level",
+                "options": ["95%", "99%", "99.9%"]
+              },
+              "holding_period": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Holding Period",
+                "options": ["1 Day", "10 Days", "21 Days"]
+              },
+              "portfolio": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Portfolio",
+                "options": ["Trading Book", "Banking Book", "All"]
+              },
+              "outputtp": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Output Format",
+                "options": ["XLS", "PDF"]
+              },
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interest Rate Sensitivity",
+          "id": "e8e7e79b-f78a-8ce8-fbge-68e2c26d6h21",
+          "prompts": [
+            {
+              "shock_type": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Rate Shock",
+                "options": ["+100bp", "+200bp", "-100bp", "-200bp", "Parallel", "Non-Parallel"]
+              },
+              "currency": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Currency",
+                "options": ["USD", "EUR", "GBP", "JPY", "All"]
+              },
+              "asofdate": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "date",
+                "label": "As Of Date"
+              },
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Compliance",
+      "reports": [
+        {
+          "name": "Anti-Money Laundering Alert Summary",
+          "id": "f9f8f8ac-089b-9df9-0c0f-79f3d37e7i32",
+          "prompts": [
+            {
+              "alert_status": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Alert Status",
+                "options": ["Open", "Closed", "Escalated", "All"]
+              },
+              "priority": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Priority Level",
+                "options": ["High", "Medium", "Low", "All"]
+              },
+              "start_date": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "date",
+                "label": "Start Date"
+              },
+              "end_date": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "date",
+                "label": "End Date"
+              },
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trade Surveillance Exceptions",
+          "id": "0a09a9bd-19ac-ae0a-1d10-8a04e48f8j43",
+          "prompts": [
+            {
+              "exception_type": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Exception Type",
+                "options": ["Insider Trading", "Market Manipulation", "Wash Trading", "Spoofing", "All"]
+              },
+              "desk": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Trading Desk",
+                "options": ["Equity", "Fixed Income", "FX", "Commodities", "All"]
+              },
+              "outputtp": {
+                "active": "true",
+                "hide": "false",
+                "inputType": "dropdown",
+                "label": "Output Format",
+                "options": ["XLS", "PDF", "CSV"]
+              },
+              "hidden_username": {
+                "active": "true",
+                "hide": "true",
+                "inputType": "inputtext",
+                "label": "SEC User Name"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

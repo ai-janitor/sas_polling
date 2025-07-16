@@ -1,0 +1,200 @@
+<!--
+=============================================================================
+DATAFIT SPA - MAIN ENTRY POINT
+=============================================================================
+Purpose: Single Page Application for SAS Viya job execution interface
+Technology: Vanilla HTML5 with semantic markup
+Dependencies: app.js, main.css, Font Awesome icons
+
+STRICT REQUIREMENTS:
+- Responsive design for desktop and mobile
+- Accessibility compliance (ARIA labels, semantic HTML)
+- NO external JavaScript frameworks (vanilla JS only)
+- Progressive enhancement approach
+- Form validation and error handling
+
+COMPONENT STRUCTURE:
+1. Header with application title and navigation
+2. Report selection dropdown (loads from JSON)
+3. Dynamic form container (generated from report schema)
+4. Job submission and status tracking
+5. File download and history section
+
+API INTEGRATION:
+- GET /api/reports - Load report definitions
+- POST /api/jobs - Submit job requests
+- GET /api/jobs/{id}/status - Poll job status
+- GET /api/jobs/{id}/files - Download results
+
+DATA FLOW:
+1. Load report definitions on page load
+2. Generate form fields based on selected report schema
+3. Submit job with parameters to submission service
+4. Poll job status until completion
+5. Display download links for generated files
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFit - SAS Viya Job Execution</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Header Section -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-chart-line"></i>
+                    DataFit
+                </h1>
+                <nav class="header-nav">
+                    <button id="nav-reports" class="nav-button active" aria-pressed="true">
+                        <i class="fas fa-file-chart"></i>
+                        Reports
+                    </button>
+                    <button id="nav-jobs" class="nav-button" aria-pressed="false">
+                        <i class="fas fa-tasks"></i>
+                        Jobs
+                    </button>
+                    <button id="nav-history" class="nav-button" aria-pressed="false">
+                        <i class="fas fa-history"></i>
+                        History
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Report Selection Section -->
+            <section id="report-section" class="content-section active">
+                <div class="section-header">
+                    <h2>Select Report</h2>
+                    <div class="search-container">
+                        <input type="text" id="report-search" placeholder="Search reports..." 
+                               aria-label="Search reports" class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                </div>
+                
+                <div id="report-selector-container" class="report-selector-container">
+                    <div class="loading-spinner" id="reports-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Loading reports...
+                    </div>
+                </div>
+
+                <!-- Dynamic Form Container -->
+                <div id="form-container" class="form-container" style="display: none;">
+                    <div class="form-header">
+                        <h3 id="selected-report-title">Report Parameters</h3>
+                        <p id="selected-report-description" class="report-description"></p>
+                    </div>
+                    
+                    <form id="job-form" class="job-form">
+                        <div id="form-fields" class="form-fields"></div>
+                        
+                        <div class="form-actions">
+                            <button type="button" id="reset-form" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i>
+                                Reset
+                            </button>
+                            <button type="submit" id="submit-job" class="btn btn-primary">
+                                <i class="fas fa-play"></i>
+                                Submit Job
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Job Status Section -->
+            <section id="jobs-section" class="content-section">
+                <div class="section-header">
+                    <h2>Active Jobs</h2>
+                    <div class="job-controls">
+                        <button id="refresh-jobs" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="active-jobs-container" class="jobs-container">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No active jobs</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="history-section" class="content-section">
+                <div class="section-header">
+                    <h2>Job History</h2>
+                    <div class="history-controls">
+                        <select id="history-filter" class="filter-select">
+                            <option value="all">All Jobs</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button id="clear-history" class="btn btn-secondary">
+                            <i class="fas fa-trash"></i>
+                            Clear History
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="job-history-container" class="jobs-container">
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>No job history</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p id="loading-message">Processing...</p>
+            </div>
+        </div>
+
+        <!-- Job Details Modal -->
+        <div id="job-modal" class="modal" style="display: none;" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+            <div class="modal-backdrop" aria-hidden="true"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-title">Job Details</h3>
+                    <button class="modal-close" aria-label="Close modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="components/report-selector.js"></script>
+    <script src="components/form-generator.js"></script>
+    <script src="components/job-status.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
