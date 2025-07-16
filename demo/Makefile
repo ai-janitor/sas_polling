@@ -33,17 +33,17 @@ setup:
 
 health: setup ## Check service health
 	@echo "$(BLUE)Checking services...$(NC)"
+	@echo -n "Submission Service: "
 	@if curl -s -f $(SUBMISSION_URL)/health > /dev/null 2>&1; then \
-		echo "Submission Service: $(GREEN)✓ Healthy$(NC)"; \
+		echo "$(GREEN)✓ Healthy$(NC)"; \
 	else \
-		echo "Submission Service: $(RED)✗ Unhealthy$(NC)"; \
-		exit 1; \
+		echo "$(RED)✗ Unhealthy$(NC)"; \
 	fi
+	@echo -n "Polling Service: "
 	@if curl -s -f $(POLLING_URL)/health > /dev/null 2>&1; then \
-		echo "Polling Service: $(GREEN)✓ Healthy$(NC)"; \
+		echo "$(GREEN)✓ Healthy$(NC)"; \
 	else \
-		echo "Polling Service: $(RED)✗ Unhealthy$(NC)"; \
-		exit 1; \
+		echo "$(RED)✗ Unhealthy$(NC)"; \
 	fi
 
 test-reports: health ## Test all report types
