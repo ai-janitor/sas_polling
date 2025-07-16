@@ -93,8 +93,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    volumes:
-      - ./data/report-definitions.json:/app/data/report-definitions.json
+    volumes: []
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.datafit-submission.rule=Host(`api.localhost`)"

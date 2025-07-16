@@ -35,8 +35,11 @@ RUN python3 -m venv /app/venv && \
 # Copy application code
 COPY . .
 
+# Copy report definitions file
+COPY report-definitions.json /app/data/report-definitions.json
+
 # Create necessary directories and set permissions
-RUN mkdir -p /var/log/datafit /tmp/datafit && \
+RUN mkdir -p /var/log/datafit /tmp/datafit /app/data && \
     chown -R appuser:appgroup /app /var/log/datafit /tmp/datafit && \
     chmod -R 755 /app && \
     chmod +x /app/venv/bin/python
